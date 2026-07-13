@@ -1,0 +1,1 @@
+# lucy_embedded_firmware

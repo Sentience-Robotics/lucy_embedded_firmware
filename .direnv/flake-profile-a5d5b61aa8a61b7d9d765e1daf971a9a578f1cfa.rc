@@ -27,23 +27,29 @@ LINENO='79'
 MACHTYPE='x86_64-pc-linux-gnu'
 NIX_BINTOOLS='/nix/store/nhjmc8clp6igx6n6zrjxlh7zri78p7ng-binutils-wrapper-2.46'
 export NIX_BINTOOLS
+NIX_BINTOOLS_WRAPPER_TARGET_HOST_avr='1'
+export NIX_BINTOOLS_WRAPPER_TARGET_HOST_avr
 NIX_BINTOOLS_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu='1'
 export NIX_BINTOOLS_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu
 NIX_BUILD_CORES='16'
 export NIX_BUILD_CORES
 NIX_CC='/nix/store/vdaz6sk455r8sbpi7wzaf9vlz5i9yyvx-gcc-wrapper-15.2.0'
 export NIX_CC
+NIX_CC_WRAPPER_TARGET_HOST_avr='1'
+export NIX_CC_WRAPPER_TARGET_HOST_avr
 NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu='1'
 export NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu
-NIX_CFLAGS_COMPILE=' -frandom-seed=xzgxp6f41w'
+NIX_CFLAGS_COMPILE=' -frandom-seed=fcw1wr7iad -isystem /nix/store/fgyf3n6iwqhp3wkshva66ryw1z4kq4gv-avrdude-8.1/include -isystem /nix/store/fgyf3n6iwqhp3wkshva66ryw1z4kq4gv-avrdude-8.1/include -isystem /nix/store/cf39yzq09x8z0ajllwnwr5fx4536nzzn-simavr-1.7/include -isystem /nix/store/cf39yzq09x8z0ajllwnwr5fx4536nzzn-simavr-1.7/include -isystem /nix/store/fgyf3n6iwqhp3wkshva66ryw1z4kq4gv-avrdude-8.1/include -isystem /nix/store/fgyf3n6iwqhp3wkshva66ryw1z4kq4gv-avrdude-8.1/include -isystem /nix/store/cf39yzq09x8z0ajllwnwr5fx4536nzzn-simavr-1.7/include -isystem /nix/store/cf39yzq09x8z0ajllwnwr5fx4536nzzn-simavr-1.7/include'
 export NIX_CFLAGS_COMPILE
 NIX_ENFORCE_NO_NATIVE='1'
 export NIX_ENFORCE_NO_NATIVE
 NIX_HARDENING_ENABLE='bindnow format fortify fortify3 libcxxhardeningfast pic relro stackclashprotection stackprotector strictflexarrays1 strictoverflow zerocallusedregs'
 export NIX_HARDENING_ENABLE
-NIX_LDFLAGS='-rpath /home/voxelle/Projects/lucy_embedded_firmware/outputs/out/lib  -L/nix/store/5lr4cfikiw2r83l84fkbf8ihq63wxcl2-rust-mixed/lib -L/nix/store/5lr4cfikiw2r83l84fkbf8ihq63wxcl2-rust-mixed/lib'
+NIX_LDFLAGS='-rpath /home/voxelle/Projects/lucy_embedded_firmware/outputs/out/lib  -L/nix/store/z0alszpybf9w7d4156kqpayxgjpy6dpi-rust-mixed/lib -L/nix/store/z0alszpybf9w7d4156kqpayxgjpy6dpi-rust-mixed/lib -L/nix/store/fgyf3n6iwqhp3wkshva66ryw1z4kq4gv-avrdude-8.1/lib -L/nix/store/fgyf3n6iwqhp3wkshva66ryw1z4kq4gv-avrdude-8.1/lib -L/nix/store/cf39yzq09x8z0ajllwnwr5fx4536nzzn-simavr-1.7/lib -L/nix/store/cf39yzq09x8z0ajllwnwr5fx4536nzzn-simavr-1.7/lib -L/nix/store/z0alszpybf9w7d4156kqpayxgjpy6dpi-rust-mixed/lib -L/nix/store/z0alszpybf9w7d4156kqpayxgjpy6dpi-rust-mixed/lib -L/nix/store/fgyf3n6iwqhp3wkshva66ryw1z4kq4gv-avrdude-8.1/lib -L/nix/store/fgyf3n6iwqhp3wkshva66ryw1z4kq4gv-avrdude-8.1/lib -L/nix/store/cf39yzq09x8z0ajllwnwr5fx4536nzzn-simavr-1.7/lib -L/nix/store/cf39yzq09x8z0ajllwnwr5fx4536nzzn-simavr-1.7/lib'
 export NIX_LDFLAGS
 NIX_NO_SELF_RPATH='1'
+NIX_PKG_CONFIG_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu='1'
+export NIX_PKG_CONFIG_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu
 NIX_STORE='/nix/store'
 export NIX_STORE
 NM='nm'
@@ -56,8 +62,12 @@ OLDPWD=''
 export OLDPWD
 OPTERR='1'
 OSTYPE='linux-gnu'
-PATH='/nix/store/5lr4cfikiw2r83l84fkbf8ihq63wxcl2-rust-mixed/bin:/nix/store/yw0cfrdbi54rn2yxd8rvdqjapkn4razj-flip-link-0.1.12/bin:/nix/store/h87r0wm7gwda4j4v85nc89vrz2cnmzfg-probe-rs-tools-0.31.0/bin:/nix/store/if2h609psbpg1ysf1m27dpshjk2wzpk4-patchelf-0.15.2/bin:/nix/store/vdaz6sk455r8sbpi7wzaf9vlz5i9yyvx-gcc-wrapper-15.2.0/bin:/nix/store/0axpqqmj1rcanmm2i8vzpd8xxwkmq2jf-gcc-15.2.0/bin:/nix/store/1k05xwhd5wjciwrr6zd54mfw8za5lqnz-glibc-2.42-67-bin/bin:/nix/store/cp7wjv1pl4wapfk48svvizxd089v9h0a-coreutils-9.11/bin:/nix/store/nhjmc8clp6igx6n6zrjxlh7zri78p7ng-binutils-wrapper-2.46/bin:/nix/store/ddk8rvjihg4vhh1k6x9rc65y1zb1kx34-binutils-2.46/bin:/nix/store/cp7wjv1pl4wapfk48svvizxd089v9h0a-coreutils-9.11/bin:/nix/store/f4bixss3h2i80asiz45aj4qmplvmam4k-findutils-4.10.0/bin:/nix/store/x90w8bcl58l9va6xhvfjgwmwl45vjf0n-diffutils-3.12/bin:/nix/store/68d86idclxs6bfaqprmdx052xqy9qlv9-gnused-4.10/bin:/nix/store/p48bl1kiw42fakak404srawmlr730b7j-gnugrep-3.12/bin:/nix/store/cb4h2p8j9m45riqawxlfndpz4arlv4rs-gawk-5.4.0/bin:/nix/store/fq62mc3s8ddxgk1nvlbzly2zmr7v2cax-gnutar-1.35/bin:/nix/store/ljxnca2bb04vlrhivnl7j7p1ph9xz4sg-gzip-1.14/bin:/nix/store/bnjhp47nmncm9jlrv6q77hpqwbzxmafr-bzip2-1.0.8-bin/bin:/nix/store/5hndr36f8c9d9z305r27z6dxkhysng95-gnumake-4.4.1/bin:/nix/store/v8llyqw71lygr2llhmcc8ya5bdlzq45v-bash-5.3p9/bin:/nix/store/bx13mhzpi1va0gccy86ycpbdj9agaw46-patch-2.8/bin:/nix/store/68hf1657rfhnzi3s0l3gmqjjh1pr54dy-xz-5.8.3-bin/bin:/nix/store/cqzmdgzwvi3xv3pfl4zymj7yaprkp7c8-file-5.48/bin'
+PATH='/nix/store/z0alszpybf9w7d4156kqpayxgjpy6dpi-rust-mixed/bin:/nix/store/yw0cfrdbi54rn2yxd8rvdqjapkn4razj-flip-link-0.1.12/bin:/nix/store/h87r0wm7gwda4j4v85nc89vrz2cnmzfg-probe-rs-tools-0.31.0/bin:/nix/store/xnp7fl36k62mmrrh1xwa49yglqsbqcam-cargo-generate-0.23.9/bin:/nix/store/fgyf3n6iwqhp3wkshva66ryw1z4kq4gv-avrdude-8.1/bin:/nix/store/v9p2lksppq3g71rfyprzhfk5a5rgcliy-avr-gcc-wrapper-15.2.0/bin:/nix/store/379d3jmvjpadblnan1f5m4sfjpf32v2n-avr-gcc-15.2.0/bin:/nix/store/zdwnsa7g38fpnd67ls7cjb3k6yk8rjb8-avr-libc-avr-2.2.1/bin:/nix/store/cp7wjv1pl4wapfk48svvizxd089v9h0a-coreutils-9.11/bin:/nix/store/l9dyxbn63y1598mpk39764gg1l1n74cs-avr-binutils-wrapper-2.46/bin:/nix/store/dia25dl9c50rqasw0bdccghd4psv1l1j-avr-binutils-2.46/bin:/nix/store/7c0n185d9a3bq6pajcxrhnmfmqqqrsd1-ravedude-0.2.2/bin:/nix/store/sn8r7j6q1js540y5briylnb62203zxq5-pkg-config-wrapper-0.29.2/bin:/nix/store/cf39yzq09x8z0ajllwnwr5fx4536nzzn-simavr-1.7/bin:/nix/store/if2h609psbpg1ysf1m27dpshjk2wzpk4-patchelf-0.15.2/bin:/nix/store/vdaz6sk455r8sbpi7wzaf9vlz5i9yyvx-gcc-wrapper-15.2.0/bin:/nix/store/0axpqqmj1rcanmm2i8vzpd8xxwkmq2jf-gcc-15.2.0/bin:/nix/store/1k05xwhd5wjciwrr6zd54mfw8za5lqnz-glibc-2.42-67-bin/bin:/nix/store/nhjmc8clp6igx6n6zrjxlh7zri78p7ng-binutils-wrapper-2.46/bin:/nix/store/ddk8rvjihg4vhh1k6x9rc65y1zb1kx34-binutils-2.46/bin:/nix/store/cp7wjv1pl4wapfk48svvizxd089v9h0a-coreutils-9.11/bin:/nix/store/f4bixss3h2i80asiz45aj4qmplvmam4k-findutils-4.10.0/bin:/nix/store/x90w8bcl58l9va6xhvfjgwmwl45vjf0n-diffutils-3.12/bin:/nix/store/68d86idclxs6bfaqprmdx052xqy9qlv9-gnused-4.10/bin:/nix/store/p48bl1kiw42fakak404srawmlr730b7j-gnugrep-3.12/bin:/nix/store/cb4h2p8j9m45riqawxlfndpz4arlv4rs-gawk-5.4.0/bin:/nix/store/fq62mc3s8ddxgk1nvlbzly2zmr7v2cax-gnutar-1.35/bin:/nix/store/ljxnca2bb04vlrhivnl7j7p1ph9xz4sg-gzip-1.14/bin:/nix/store/bnjhp47nmncm9jlrv6q77hpqwbzxmafr-bzip2-1.0.8-bin/bin:/nix/store/5hndr36f8c9d9z305r27z6dxkhysng95-gnumake-4.4.1/bin:/nix/store/v8llyqw71lygr2llhmcc8ya5bdlzq45v-bash-5.3p9/bin:/nix/store/bx13mhzpi1va0gccy86ycpbdj9agaw46-patch-2.8/bin:/nix/store/68hf1657rfhnzi3s0l3gmqjjh1pr54dy-xz-5.8.3-bin/bin:/nix/store/cqzmdgzwvi3xv3pfl4zymj7yaprkp7c8-file-5.48/bin'
 export PATH
+PKG_CONFIG='pkg-config'
+export PKG_CONFIG
+PKG_CONFIG_PATH='/nix/store/cf39yzq09x8z0ajllwnwr5fx4536nzzn-simavr-1.7/lib/pkgconfig'
+export PKG_CONFIG_PATH
 PS4='+ '
 RANLIB='ranlib'
 export RANLIB
@@ -73,7 +83,7 @@ STRINGS='strings'
 export STRINGS
 STRIP='strip'
 export STRIP
-XDG_DATA_DIRS='/nix/store/5lr4cfikiw2r83l84fkbf8ihq63wxcl2-rust-mixed/share:/nix/store/h87r0wm7gwda4j4v85nc89vrz2cnmzfg-probe-rs-tools-0.31.0/share:/nix/store/if2h609psbpg1ysf1m27dpshjk2wzpk4-patchelf-0.15.2/share'
+XDG_DATA_DIRS='/nix/store/z0alszpybf9w7d4156kqpayxgjpy6dpi-rust-mixed/share:/nix/store/h87r0wm7gwda4j4v85nc89vrz2cnmzfg-probe-rs-tools-0.31.0/share:/nix/store/fgyf3n6iwqhp3wkshva66ryw1z4kq4gv-avrdude-8.1/share:/nix/store/sn8r7j6q1js540y5briylnb62203zxq5-pkg-config-wrapper-0.29.2/share:/nix/store/if2h609psbpg1ysf1m27dpshjk2wzpk4-patchelf-0.15.2/share'
 export XDG_DATA_DIRS
 __structuredAttrs=''
 export __structuredAttrs
@@ -123,8 +133,8 @@ export dontAddDisableDepTrack
 declare -a envBuildBuildHooks=()
 declare -a envBuildHostHooks=()
 declare -a envBuildTargetHooks=()
-declare -a envHostHostHooks=('ccWrapper_addCVars' 'bintoolsWrapper_addLDVars' )
-declare -a envHostTargetHooks=('ccWrapper_addCVars' 'bintoolsWrapper_addLDVars' )
+declare -a envHostHostHooks=('ccWrapper_addCVars' 'bintoolsWrapper_addLDVars' 'pkgConfigWrapper_addPkgConfigPath' 'ccWrapper_addCVars' 'bintoolsWrapper_addLDVars' )
+declare -a envHostTargetHooks=('ccWrapper_addCVars' 'bintoolsWrapper_addLDVars' 'pkgConfigWrapper_addPkgConfigPath' 'ccWrapper_addCVars' 'bintoolsWrapper_addLDVars' )
 declare -a envTargetTargetHooks=()
 declare -a fixupOutputHooks=('if [ -z "${dontPatchELF-}" ]; then patchELF "$prefix"; fi' 'if [[ -z "${noAuditTmpdir-}" && -e "$prefix" ]]; then auditTmpdir "$prefix"; fi' 'if [ -z "${dontGzipMan-}" ]; then compressManPages "$prefix"; fi' '_moveLib64' '_moveSbin' '_moveSystemdUserUnits' 'patchShebangsAuto' '_pruneLibtoolFiles' '_doStrip' )
 initialPath='/nix/store/cp7wjv1pl4wapfk48svvizxd089v9h0a-coreutils-9.11 /nix/store/f4bixss3h2i80asiz45aj4qmplvmam4k-findutils-4.10.0 /nix/store/x90w8bcl58l9va6xhvfjgwmwl45vjf0n-diffutils-3.12 /nix/store/68d86idclxs6bfaqprmdx052xqy9qlv9-gnused-4.10 /nix/store/p48bl1kiw42fakak404srawmlr730b7j-gnugrep-3.12 /nix/store/cb4h2p8j9m45riqawxlfndpz4arlv4rs-gawk-5.4.0 /nix/store/fq62mc3s8ddxgk1nvlbzly2zmr7v2cax-gnutar-1.35 /nix/store/ljxnca2bb04vlrhivnl7j7p1ph9xz4sg-gzip-1.14 /nix/store/bnjhp47nmncm9jlrv6q77hpqwbzxmafr-bzip2-1.0.8-bin /nix/store/5hndr36f8c9d9z305r27z6dxkhysng95-gnumake-4.4.1 /nix/store/v8llyqw71lygr2llhmcc8ya5bdlzq45v-bash-5.3p9 /nix/store/bx13mhzpi1va0gccy86ycpbdj9agaw46-patch-2.8 /nix/store/68hf1657rfhnzi3s0l3gmqjjh1pr54dy-xz-5.8.3-bin /nix/store/cqzmdgzwvi3xv3pfl4zymj7yaprkp7c8-file-5.48'
@@ -132,7 +142,7 @@ mesonFlags=''
 export mesonFlags
 name='Lucy-Embedded-Firmware-env'
 export name
-nativeBuildInputs='/nix/store/5lr4cfikiw2r83l84fkbf8ihq63wxcl2-rust-mixed /nix/store/yw0cfrdbi54rn2yxd8rvdqjapkn4razj-flip-link-0.1.12 /nix/store/h87r0wm7gwda4j4v85nc89vrz2cnmzfg-probe-rs-tools-0.31.0'
+nativeBuildInputs='/nix/store/z0alszpybf9w7d4156kqpayxgjpy6dpi-rust-mixed /nix/store/yw0cfrdbi54rn2yxd8rvdqjapkn4razj-flip-link-0.1.12 /nix/store/h87r0wm7gwda4j4v85nc89vrz2cnmzfg-probe-rs-tools-0.31.0 /nix/store/xnp7fl36k62mmrrh1xwa49yglqsbqcam-cargo-generate-0.23.9 /nix/store/fgyf3n6iwqhp3wkshva66ryw1z4kq4gv-avrdude-8.1 /nix/store/v9p2lksppq3g71rfyprzhfk5a5rgcliy-avr-gcc-wrapper-15.2.0 /nix/store/7c0n185d9a3bq6pajcxrhnmfmqqqrsd1-ravedude-0.2.2 /nix/store/sn8r7j6q1js540y5briylnb62203zxq5-pkg-config-wrapper-0.29.2 /nix/store/cf39yzq09x8z0ajllwnwr5fx4536nzzn-simavr-1.7'
 export nativeBuildInputs
 out='/home/voxelle/Projects/lucy_embedded_firmware/outputs/out'
 export out
@@ -153,7 +163,7 @@ phases='buildPhase'
 export phases
 pkg='/nix/store/vdaz6sk455r8sbpi7wzaf9vlz5i9yyvx-gcc-wrapper-15.2.0'
 declare -a pkgsBuildBuild=()
-declare -a pkgsBuildHost=('/nix/store/5lr4cfikiw2r83l84fkbf8ihq63wxcl2-rust-mixed' '/nix/store/yw0cfrdbi54rn2yxd8rvdqjapkn4razj-flip-link-0.1.12' '/nix/store/h87r0wm7gwda4j4v85nc89vrz2cnmzfg-probe-rs-tools-0.31.0' '/nix/store/if2h609psbpg1ysf1m27dpshjk2wzpk4-patchelf-0.15.2' '/nix/store/0vj9lp345wbhfdagi0vr0wmczyjdsk3f-update-autotools-gnu-config-scripts-hook' '/nix/store/0y5xmdb7qfvimjwbq7ibg1xdgkgjwqng-no-broken-symlinks.sh' '/nix/store/cv1d7p48379km6a85h4zp6kr86brh32q-audit-tmpdir.sh' '/nix/store/85clx3b0xkdf58jn161iy80y5223ilbi-compress-man-pages.sh' '/nix/store/p3l1a5y7nllfyrjn2krlwgcc3z0cd3fq-make-symlinks-relative.sh' '/nix/store/5yzw0vhkyszf2d179m0qfkgxmp5wjjx4-move-docs.sh' '/nix/store/fyaryjvghbkpfnsyw97hb3lyb37s1pd6-move-lib64.sh' '/nix/store/kd4xwxjpjxi71jkm6ka0np72if9rm3y0-move-sbin.sh' '/nix/store/pag6l61paj1dc9sv15l7bm5c17xn5kyk-move-systemd-user-units.sh' '/nix/store/cmzya9irvxzlkh7lfy6i82gbp0saxqj3-multiple-outputs.sh' '/nix/store/x8c40nfigps493a07sdr2pm5s9j1cdc0-patch-shebangs.sh' '/nix/store/cickvswrvann041nqxb0rxilc46svw1n-prune-libtool-files.sh' '/nix/store/xyff06pkhki3qy1ls77w10s0v79c9il0-reproducible-builds.sh' '/nix/store/z7k98578dfzi6l3hsvbivzm7hfqlk0zc-set-source-date-epoch-to-latest.sh' '/nix/store/pilsssjjdxvdphlg2h19p0bfx5q0jzkn-strip.sh' '/nix/store/vdaz6sk455r8sbpi7wzaf9vlz5i9yyvx-gcc-wrapper-15.2.0' '/nix/store/nhjmc8clp6igx6n6zrjxlh7zri78p7ng-binutils-wrapper-2.46' )
+declare -a pkgsBuildHost=('/nix/store/z0alszpybf9w7d4156kqpayxgjpy6dpi-rust-mixed' '/nix/store/yw0cfrdbi54rn2yxd8rvdqjapkn4razj-flip-link-0.1.12' '/nix/store/h87r0wm7gwda4j4v85nc89vrz2cnmzfg-probe-rs-tools-0.31.0' '/nix/store/xnp7fl36k62mmrrh1xwa49yglqsbqcam-cargo-generate-0.23.9' '/nix/store/fgyf3n6iwqhp3wkshva66ryw1z4kq4gv-avrdude-8.1' '/nix/store/v9p2lksppq3g71rfyprzhfk5a5rgcliy-avr-gcc-wrapper-15.2.0' '/nix/store/l9dyxbn63y1598mpk39764gg1l1n74cs-avr-binutils-wrapper-2.46' '/nix/store/7c0n185d9a3bq6pajcxrhnmfmqqqrsd1-ravedude-0.2.2' '/nix/store/sn8r7j6q1js540y5briylnb62203zxq5-pkg-config-wrapper-0.29.2' '/nix/store/cf39yzq09x8z0ajllwnwr5fx4536nzzn-simavr-1.7' '/nix/store/if2h609psbpg1ysf1m27dpshjk2wzpk4-patchelf-0.15.2' '/nix/store/0vj9lp345wbhfdagi0vr0wmczyjdsk3f-update-autotools-gnu-config-scripts-hook' '/nix/store/0y5xmdb7qfvimjwbq7ibg1xdgkgjwqng-no-broken-symlinks.sh' '/nix/store/cv1d7p48379km6a85h4zp6kr86brh32q-audit-tmpdir.sh' '/nix/store/85clx3b0xkdf58jn161iy80y5223ilbi-compress-man-pages.sh' '/nix/store/p3l1a5y7nllfyrjn2krlwgcc3z0cd3fq-make-symlinks-relative.sh' '/nix/store/5yzw0vhkyszf2d179m0qfkgxmp5wjjx4-move-docs.sh' '/nix/store/fyaryjvghbkpfnsyw97hb3lyb37s1pd6-move-lib64.sh' '/nix/store/kd4xwxjpjxi71jkm6ka0np72if9rm3y0-move-sbin.sh' '/nix/store/pag6l61paj1dc9sv15l7bm5c17xn5kyk-move-systemd-user-units.sh' '/nix/store/cmzya9irvxzlkh7lfy6i82gbp0saxqj3-multiple-outputs.sh' '/nix/store/x8c40nfigps493a07sdr2pm5s9j1cdc0-patch-shebangs.sh' '/nix/store/cickvswrvann041nqxb0rxilc46svw1n-prune-libtool-files.sh' '/nix/store/xyff06pkhki3qy1ls77w10s0v79c9il0-reproducible-builds.sh' '/nix/store/z7k98578dfzi6l3hsvbivzm7hfqlk0zc-set-source-date-epoch-to-latest.sh' '/nix/store/pilsssjjdxvdphlg2h19p0bfx5q0jzkn-strip.sh' '/nix/store/vdaz6sk455r8sbpi7wzaf9vlz5i9yyvx-gcc-wrapper-15.2.0' '/nix/store/nhjmc8clp6igx6n6zrjxlh7zri78p7ng-binutils-wrapper-2.46' )
 declare -a pkgsBuildTarget=()
 declare -a pkgsHostHost=()
 declare -a pkgsHostTarget=()
@@ -180,6 +190,7 @@ echo -e "🛡️  \033[1;36mLucy Embedded Firmware\033[1;0m"
 echo -e "----------------------------"
 echo -e "cargo: $(cargo --version  | cut -d '\'' '\'' -f2)"
 echo -e "rustc: $(rustc --version | cut -d '\'' '\'' -f2)"
+echo -e "targets: target (thumbv6m-none-eabi), avr (build-std)"
 echo -e "----------------------------"
 '
 export shellHook
@@ -1697,6 +1708,14 @@ patchShebangsAuto ()
             patchShebangs --host "$prefix";
         fi;
     fi
+}
+pkgConfigWrapper_addPkgConfigPath ()
+{
+ 
+    local role_post;
+    getHostRoleEnvHook;
+    addToSearchPath "PKG_CONFIG_PATH${role_post}" "$1/lib/pkgconfig";
+    addToSearchPath "PKG_CONFIG_PATH${role_post}" "$1/share/pkgconfig"
 }
 prependToVar ()
 {

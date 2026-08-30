@@ -19,7 +19,7 @@
           fenix.packages.${system}.stable.clippy
           fenix.packages.${system}.stable.rustfmt
           fenix.packages.${system}.stable.rust-src
-          fenix.packages.${system}.targets.${target}.stable.rust-std
+          fenix.packages.${system}.targets.${target}.latest.rust-std
         ];
       in
       {
@@ -29,6 +29,16 @@
             rustToolchain
             pkgs.flip-link
             pkgs.probe-rs-tools
+            pkgs.cargo-generate
+
+            # AVR / Arduino tooling
+            pkgs.avrdude
+            pkgs.pkgsCross.avr.buildPackages.gcc   # avr-gcc, for linking against avr-libc
+            pkgs.ravedude
+
+            # shared / testing
+            pkgs.pkg-config
+            pkgs.simavr
           ];
           shellHook = ''
             echo -e ""
@@ -36,6 +46,7 @@
             echo -e "----------------------------"
             echo -e "cargo: $(cargo --version  | cut -d ' ' -f2)"
             echo -e "rustc: $(rustc --version | cut -d ' ' -f2)"
+            echo -e "targets: target (${target}), avr (build-std)"
             echo -e "----------------------------"
           '';
         };

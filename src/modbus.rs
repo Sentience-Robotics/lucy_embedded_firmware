@@ -4,28 +4,56 @@ use crc::{Crc, CRC_16_MODBUS};
 
 const MODBUS_CRC: Crc<u16> = Crc::<u16>::new(&CRC_16_MODBUS);
 
+
+
 pub struct RegisterTable {
     pub registers: [u16; 0xFF]
 }
 
-pub struct Slave {
-    pub address: u16,
+pub struct RegisterView<'a> {
+    pub table: &'a mut RegisterTable
 }
 
-enum ModbusError {
+impl<'a> RegisterView<'a> {
+    pub fn new(table: &'a mut RegisterTable) -> Self {
+        RegisterView { table }
+    }
+
+    pub fn read_register(&self, index: u16) -> u16 {
+        if index < self.table.registers.len() as u16 {
+            self.table.registers[index as usize]
+        } else {
+            0
+        }
+    }
+
+    pub fn write_register(&mut self, index: u16, value: u16) {
+        if index < self.table.registers.len() as u16 {
+            self.table.registers[index as usize] = value;
+        }
+    }
+}
+
+
+
+pub struct Slave {
+    pub address: u8,
+}
+
+pub enum ModbusError {
     InvalidAddress,
     InvalidFrame,
     CrcError,
     UnknownOpcode
 }
 
-fn parse_modbus_frame(frame: &[u8]) -> Result<Request<'_>, ModbusError> {
+pub fn parse_modbus_frame<'a>(slave: &'a Slave, frame: &'a[u8]) -> Result<Request<'a>, ModbusError> {
     let len = frame.len();
 
     if len < 4 {
         return Err(ModbusError::InvalidFrame);
     }
-    if frame[0] != 0x01 {
+    if frame[0] != slave.address {
         return Err(ModbusError::InvalidAddress);
     }
 
@@ -44,7 +72,7 @@ fn parse_modbus_frame(frame: &[u8]) -> Result<Request<'_>, ModbusError> {
     }
 }
 
-fn route_modbus_request(register_table: &mut RegisterTable, request: Request<'_>) -> Result<(), ModbusError> {
+pub fn route_modbus_request(register_table: &mut RegisterTable, request: Request<'_>) -> Result<(), ModbusError> {
     match request {
         Request::ReadHoldingRegisters(addr, quantity) => {
             let registers = &register_table.registers[addr as usize..(addr + quantity) as usize];

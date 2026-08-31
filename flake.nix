@@ -29,6 +29,8 @@
             rustToolchain
             pkgs.flip-link
             pkgs.probe-rs-tools
+            pkgs.elf2uf2-rs
+            pkgs.picotool
           ];
           shellHook = ''
             echo -e ""

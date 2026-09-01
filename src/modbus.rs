@@ -1,6 +1,11 @@
-use modbus_core::Request;
-use modbus_core::Response;
+use modbus_core::{Request, Response};
 use crc::{Crc, CRC_16_MODBUS};
+
+use core::{
+    error::Error,
+    result::Result::{self, Err, Ok},
+    option::Option::{self, None, Some},
+};
 
 const MODBUS_CRC: Crc<u16> = Crc::<u16>::new(&CRC_16_MODBUS);
 

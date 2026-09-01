@@ -1,13 +1,4 @@
-use std::fs::File;
-use std::io::{self, Write, Read};
-
-pub trait Transport {
-    type Error;
-
-    fn write(&mut self, data: &[u8]) -> std::result::Result<(), Self::Error>;
-    fn read(&mut self, buffer: &mut [u8]) -> std::result::Result<usize, Self::Error>;
-    fn flush(&mut self) -> std::result::Result<(), Self::Error>;
-}
+use core::result::Result;
 
 pub enum TransportError {
     WriteError,
@@ -15,17 +6,26 @@ pub enum TransportError {
     FlushError,
 }
 
+pub trait Transport {
+    type Error;
+
+    fn write(&mut self, data: &[u8]) -> Result<(), Self::Error>;
+    fn read(&mut self, buffer: &mut [u8]) -> Result<usize, Self::Error>;
+    fn flush(&mut self) -> Result<(), Self::Error>;
+}
+
+/*
 pub struct DummyTransport {
 }
 
 impl Transport for DummyTransport {
     type Error = TransportError;
 
-    fn write(&mut self, data: &[u8]) -> std::result::Result<(), Self::Error> {
+    fn write(&mut self, data: &[u8]) -> Result<(), Self::Error> {
         Ok(())
     }
 
-    fn read(&mut self, buffer: &mut [u8]) -> std::result::Result<usize, Self::Error> {
+    fn read(&mut self, buffer: &mut [u8]) -> Result<usize, Self::Error> {
         let mut ibuffer = String::new();
         io::stdin().read_line(&mut ibuffer).expect("Failed to read line");
         let len = usize::min(ibuffer.len(), buffer.len());
@@ -33,7 +33,7 @@ impl Transport for DummyTransport {
         Ok(len)
     }
 
-    fn flush(&mut self) -> std::result::Result<(), Self::Error> {
+    fn flush(&mut self) -> Result<(), Self::Error> {
         Ok(())
     }
 }
@@ -93,3 +93,4 @@ impl Transport for NamedPipeTransport {
         }
     }
 }
+*/

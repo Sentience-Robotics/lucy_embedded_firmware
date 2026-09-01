@@ -1,4 +1,7 @@
-use crate::drivers::metadata_temp::{RegisterView};
+mod modbus;
+use crate::modbus::{*};
+use core::result::Result;
+use core::error::Error;
 
 #[derive(Debug)]
 pub enum ModBusDriverError {

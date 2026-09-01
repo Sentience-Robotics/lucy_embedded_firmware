@@ -1,5 +1,7 @@
 use crate::drivers::driver_generic::{ModBusDriver, ModBusDriverError};
-use crate::drivers::metadata_temp::{RegisterView};
+use crate::modbus::{*};
+use core::result::Result;
+use core::error::Error;
 
 #[derive(Debug)]
 pub enum ServoHubDriverError {

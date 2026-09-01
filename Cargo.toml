@@ -1,5 +1,5 @@
 [package]
-name = "lucy_embedded_firmware"
+name = "lucy_embedded_firmware_core"
 version = "0.1.0"
 edition = "2024"
 
@@ -12,11 +12,10 @@ exclude = [
 ]
 
 [workspace.dependencies]
-lucy_embedded_firmware = { path = "." }
+lucy_embedded_firmware_core = { path = "." }
 
 [dependencies]
 crc = "3.4.0"
 modbus-core = "0.2.0"
 
 [build-dependencies]
-builder = { path = "builder" }

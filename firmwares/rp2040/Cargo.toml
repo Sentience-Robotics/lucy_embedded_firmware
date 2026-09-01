@@ -1,0 +1,19 @@
+[package]
+name = "lucy_embedded_firmware_rp2040"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+#app-core = { workspace = true }
+cortex-m = "0.7.9"
+cortex-m-rt = "0.7.6"
+embedded-hal = "1.0.0"
+panic-halt = "1.0.0"
+
+rp2040-boot2 = "0.3.0"
+rp2040-hal = { version = "0.11.0", features = ["rt", "critical-section-impl"] }
+
+smart-leds = "0.4.0"
+usb-device = "0.3.2"
+usbd-serial = "0.2.2"
+ws2812-pio = "0.9.0"

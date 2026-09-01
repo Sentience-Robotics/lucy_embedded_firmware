@@ -39,6 +39,8 @@
             # shared / testing
             pkgs.pkg-config
             pkgs.simavr
+            pkgs.elf2uf2-rs
+            pkgs.picotool
           ];
           shellHook = ''
             echo -e ""

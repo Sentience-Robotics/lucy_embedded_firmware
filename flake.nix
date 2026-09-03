@@ -36,6 +36,10 @@
             pkgs.simavr
             pkgs.elf2uf2-rs
             pkgs.picotool
+
+            # task runner
+            pkgs.just
+
           ];
           shellHook = ''
             echo -e ""

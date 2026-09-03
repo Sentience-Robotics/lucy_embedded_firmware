@@ -1,6 +1,6 @@
 # Build AVR firmware (nightly, build-std)
 build-arduino-mega:
-    cd firmwares/arduino_mega && cargo build --release -Z build-std=core --target avr-specs/atmega2560.json
+    cd firmwares/arduino_mega && cargo build --release
 
 # Build RP2040 firmware (stable)
 build-rp2040:

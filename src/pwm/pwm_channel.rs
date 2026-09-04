@@ -1,3 +1,3 @@
 pub trait PwmChannel {
-    fn setPWM(pulse: u16);
+    fn set_pwm(&mut self, pulse: u16);
 }

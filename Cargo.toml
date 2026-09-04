@@ -3,17 +3,6 @@ name = "lucy_embedded_firmware_core"
 version = "0.1.0"
 edition = "2024"
 
-[workspace]
-resolver = "2"
-members = [
-    "firmwares/rp2040"
-]
-exclude = [
-]
-
-[workspace.dependencies]
-lucy_embedded_firmware_core = { path = "." }
-
 [dependencies]
 crc = "3.4.0"
 modbus-core = "0.2.0"

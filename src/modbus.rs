@@ -1,35 +1,74 @@
-use modbus_core::Request;
-use modbus_core::Response;
+use modbus_core::{Request, Response};
 use crc::{Crc, CRC_16_MODBUS};
+
+use core::{
+    cell::Cell,
+    error::Error,
+    result::Result::{self, Err, Ok},
+    option::Option::{self, None, Some},
+};
 
 const MODBUS_CRC: Crc<u16> = Crc::<u16>::new(&CRC_16_MODBUS);
 
 
+/* Trait definition */
+
+pub trait ModbusAdapter {
+    fn tick(&mut self, rv: &mut RegisterView);
+    fn get_nb_register(&self) -> u16;
+    fn get_base_register(&self) -> u16;
+}
+
+/* Registers structure definition */
 
 pub struct RegisterTable {
-    pub registers: [u16; 0xFF]
+    pub registers: [Cell<u16>; 0xFF],
+}
+
+impl RegisterTable {
+    pub const fn new() -> Self {
+        Self {
+            registers: [const { Cell::new(0) }; 0xFF],
+        } 
+    }
+}
+
+impl Default for RegisterTable {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 pub struct RegisterView<'a> {
-    pub table: &'a mut RegisterTable
+    pub table: &'a RegisterTable,
+    pub base_register: u16,
+    pub nb_register: u16,
 }
 
 impl<'a> RegisterView<'a> {
-    pub fn new(table: &'a mut RegisterTable) -> Self {
-        RegisterView { table }
+    pub fn new(table: &'a RegisterTable, base_register: u16, nb_register: u16) -> Self {
+        RegisterView { table, base_register, nb_register }
     }
 
     pub fn read_register(&self, index: u16) -> u16 {
-        if index < self.table.registers.len() as u16 {
-            self.table.registers[index as usize]
+        if index > self.nb_register {
+            return 0;
+        }
+        let reg = self.base_register + index;
+        if reg < self.table.registers.len() as u16 {
+            self.table.registers[reg as usize].get()
         } else {
             0
         }
     }
 
     pub fn write_register(&mut self, index: u16, value: u16) {
-        if index < self.table.registers.len() as u16 {
-            self.table.registers[index as usize] = value;
+        if index > self.nb_register {
+            return;
+        }
+        let reg = self.base_register + index;
+        if reg < self.table.registers.len() as u16 {
+            self.table.registers[reg as usize].set(value);
         }
     }
 }
@@ -47,6 +86,15 @@ pub enum ModbusError {
     UnknownOpcode
 }
 
+pub fn check_crc(frame: &[u8]) -> bool {
+    let len = frame.len();
+    let payload = &frame[..len - 2];
+    let crc = MODBUS_CRC.checksum(payload);
+    let crc_received = u16::from_le_bytes([frame[len - 2], frame[len - 1]]);
+
+    crc == crc_received
+}
+
 pub fn parse_modbus_frame<'a>(slave: &'a Slave, frame: &'a[u8]) -> Result<Request<'a>, ModbusError> {
     let len = frame.len();
 
@@ -56,11 +104,7 @@ pub fn parse_modbus_frame<'a>(slave: &'a Slave, frame: &'a[u8]) -> Result<Reques
     if frame[0] != slave.address {
         return Err(ModbusError::InvalidAddress);
     }
-
-    let payload_to_check = &frame[..len - 2];
-    let crc = MODBUS_CRC.checksum(payload_to_check);
-    let crc_received = u16::from_le_bytes([frame[len - 2], frame[len - 1]]);
-    if crc != crc_received {
+    if !check_crc(&frame) {
         return Err(ModbusError::CrcError);
     }
 
@@ -72,14 +116,14 @@ pub fn parse_modbus_frame<'a>(slave: &'a Slave, frame: &'a[u8]) -> Result<Reques
     }
 }
 
-pub fn route_modbus_request(register_table: &mut RegisterTable, request: Request<'_>) -> Result<(), ModbusError> {
+pub fn route_modbus_request(register_table: &RegisterTable, request: Request<'_>) -> Result<(), ModbusError> {
     match request {
         Request::ReadHoldingRegisters(addr, quantity) => {
             let registers = &register_table.registers[addr as usize..(addr + quantity) as usize];
             Ok(())
         },
         Request::WriteSingleRegister(addr, value) => {
-            register_table.registers[addr as usize] = value;
+            register_table.registers[addr as usize].set(value);
             Ok(())
         },
         Request::WriteMultipleRegisters(addr, data) => {
@@ -89,7 +133,7 @@ pub fn route_modbus_request(register_table: &mut RegisterTable, request: Request
             }
             for i in 0..data.len() {
                 if let Some(value) = data.get(i) {
-                    register_table.registers[addr as usize + i] = value;
+                    register_table.registers[addr as usize + i].set(value);
                 }
             }
             Ok(())

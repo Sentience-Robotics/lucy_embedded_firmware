@@ -3,8 +3,14 @@ name = "lucy_embedded_firmware_rp2040"
 version = "0.1.0"
 edition = "2024"
 
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
 [dependencies]
-#app-core = { workspace = true }
+lucy_embedded_firmware_core = { path = "../.." }
 cortex-m = "0.7.9"
 cortex-m-rt = "0.7.6"
 embedded-hal = "1.0.0"

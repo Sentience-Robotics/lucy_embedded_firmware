@@ -4,4 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-app-core = { workspace = true }
+lucy_embedded_firmware_core = { path = "../.." }
+crc = "3.4.0"
+modbus-core = "0.2.0"
+serialport = "4.10.0"

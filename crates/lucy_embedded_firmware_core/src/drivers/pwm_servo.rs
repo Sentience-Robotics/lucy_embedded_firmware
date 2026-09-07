@@ -1,8 +1,10 @@
 use crate::{pwm::PwmChannel};
 use crate::{modbus::RegisterView, modbus::ModbusAdapter, utils::map_range};
 
-pub struct PwmServoDriver<C> {
-    pub channel: C,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub struct PwmServoConfig {
     pub min_pulse: u16,
     pub max_pulse: u16,
     pub min_angle: u16,
@@ -10,19 +12,24 @@ pub struct PwmServoDriver<C> {
     pub default_angle: u16
 }
 
+pub struct PwmServoDriver<C> {
+    pub config: PwmServoConfig,
+    pub channel: C,
+}
+
 impl<C: PwmChannel> PwmServoDriver<C> {
     pub fn move_angle(&mut self, angle: u16) {
-        let angle = angle.clamp(self.min_angle, self.max_angle);
-        let pulse = map_range(angle as f32, self.min_angle as f32, self.max_angle as f32, self.min_pulse as f32, self.max_pulse as f32) as u16;
+        let angle = angle.clamp(self.config.min_angle, self.config.max_angle);
+        let pulse = map_range(angle as f32, self.config.min_angle as f32, self.config.max_angle as f32, self.config.min_pulse as f32, self.config.max_pulse as f32) as u16;
         self.channel.set_pwm(pulse);
     }
 
     pub fn reset_angle(&mut self) {
-        let angle = self.default_angle.clamp(self.min_angle, self.max_angle);
-        let pulse = map_range(angle as f32, self.min_angle as f32, self.max_angle as f32, self.min_pulse as f32, self.max_pulse as f32) as u16;
-        self.channel.set_pwm(pulse);
+        self.move_angle(self.config.default_angle);
     }
 }
+
+
 
 pub struct PwmServoModbusAdapter<'a, C> {
     pub base_register: u16,

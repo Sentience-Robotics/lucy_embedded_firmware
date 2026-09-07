@@ -10,7 +10,7 @@ panic = "abort"
 panic = "abort"
 
 [dependencies]
-lucy_embedded_firmware_core = { path = "../.." }
+lucy_embedded_firmware_core = { path = "../../crates/lucy_embedded_firmware_core" }
 cortex-m = "0.7.9"
 cortex-m-rt = "0.7.6"
 embedded-hal = "1.0.0"
@@ -23,3 +23,6 @@ smart-leds = "0.4.0"
 usb-device = "0.3.2"
 usbd-serial = "0.2.2"
 ws2812-pio = "0.9.0"
+
+[build-dependencies]
+builder = { path = "../../builder/" }

@@ -5,7 +5,7 @@ mod channel;
 use channel::Rp2040PwmChannel;
 
 use lucy_embedded_firmware_core::pwm::{PwmChannel};
-use lucy_embedded_firmware_core::drivers::pwm_servo::{PwmServoDriver, PwmServoModbusAdapter};
+use lucy_embedded_firmware_core::drivers::pwm_servo::{PwmServoDriver, PwmServoConfig, PwmServoModbusAdapter};
 use lucy_embedded_firmware_core::modbus::{
     ModbusError,
     ModbusAdapter,
@@ -104,13 +104,17 @@ fn main() -> ! {
         pwm: pwm
     };
 
-    let mut driver = PwmServoDriver {
-        channel: channel,
+    let mut driver_config = PwmServoConfig {
         min_pulse: 1250,
         max_pulse: 2500,
         min_angle: 0,
         max_angle: 180,
         default_angle: 90
+    };
+
+    let mut driver = PwmServoDriver {
+        channel: channel,
+        config: driver_config
     };
 
     let mut adapter = PwmServoModbusAdapter {

@@ -13,10 +13,48 @@ const MODBUS_CRC: Crc<u16> = Crc::<u16>::new(&CRC_16_MODBUS);
 
 /* Trait definition */
 
+pub enum ModbusError {
+    InvalidAddress,
+    InvalidFrame,
+    CrcError,
+    UnknownOpcode,
+    IllegalFunction
+}
+
 pub trait ModbusAdapter {
     fn tick(&mut self, rv: &mut RegisterView);
     fn get_nb_register(&self) -> u16;
     fn get_base_register(&self) -> u16;
+}
+
+/* WIP */
+
+pub enum Access {
+    ReadOnly,
+    WriteOnly,
+    ReadWrite
+}
+
+pub struct RegisterDescriptor<Ctx> {
+    pub address: u16,
+    pub read: Option<fn(&Ctx) -> Result<u16, ModbusError>>,
+    pub write: Option<fn(&mut Ctx, u16) -> Result<(), ModbusError>>
+}
+
+impl<Ctx> RegisterDescriptor<Ctx> {
+    pub fn read(&self, ctx: &Ctx) -> Result<u16, ModbusError> {
+        match self.read {
+            Some(func) => func(ctx),
+            None => Err(ModbusError::IllegalFunction)
+        }
+    }
+        
+    pub fn write(&self, ctx: &mut Ctx, value: u16) -> Result<(), ModbusError> {
+        match self.write {
+            Some(func) => func(ctx, value),
+            None => Err(ModbusError::IllegalFunction)
+        }
+    }
 }
 
 /* Registers structure definition */
@@ -77,13 +115,6 @@ impl<'a> RegisterView<'a> {
 
 pub struct Slave {
     pub address: u8,
-}
-
-pub enum ModbusError {
-    InvalidAddress,
-    InvalidFrame,
-    CrcError,
-    UnknownOpcode
 }
 
 pub fn check_crc(frame: &[u8]) -> bool {

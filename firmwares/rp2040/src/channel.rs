@@ -22,12 +22,19 @@ use rp2040_hal::{
     Clock
 };
 
+pub enum ChannelError {
+
+}
+
 pub struct Rp2040PwmChannel {
     pub pwm: Slice<Pwm0, FreeRunning>,
 }
 
 impl PwmChannel for Rp2040PwmChannel {
-    fn set_pwm(&mut self, pulse: u16) {
+    type Error = ChannelError;
+
+    fn set_pwm(&mut self, pulse: u16) -> Result<(), ChannelError> {
         self.pwm.channel_a.set_duty_cycle(pulse).unwrap();
+        Ok(())
     }
 }

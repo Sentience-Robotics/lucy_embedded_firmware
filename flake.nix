@@ -27,12 +27,15 @@
           name = "Lucy Embedded Firmware";
           packages = [
             rustToolchain
+            pkgs.udev
+            pkgs.systemd
             pkgs.flip-link
             pkgs.probe-rs-tools
             pkgs.elf2uf2-rs
             pkgs.picotool
           ];
           shellHook = ''
+            export LD_LIBRARY_PATH="${pkgs.udev}/lib:$LD_LIBRARY_PATH"
             echo -e ""
             echo -e "🛡️  \033[1;36mLucy Embedded Firmware\033[1;0m"
             echo -e "----------------------------"

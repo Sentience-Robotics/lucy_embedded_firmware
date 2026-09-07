@@ -22,6 +22,9 @@
             # directory (nightly for AVR/build-std, stable for RP2040).
             pkgs.rustup
 
+            rustToolchain
+            pkgs.udev
+            pkgs.systemd
             pkgs.flip-link
             pkgs.probe-rs-tools
             pkgs.cargo-generate
@@ -42,6 +45,7 @@
 
           ];
           shellHook = ''
+            export LD_LIBRARY_PATH="${pkgs.udev}/lib:$LD_LIBRARY_PATH"
             echo -e ""
             echo -e "🛡️  \033[1;36mLucy Embedded Firmware\033[1;0m"
             echo -e "----------------------------"

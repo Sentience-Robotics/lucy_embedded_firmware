@@ -1,4 +1,3 @@
-mod modbus;
 use crate::modbus::{*};
 use core::result::Result;
 use core::error::Error;

@@ -1,5 +1,5 @@
 
-use crate::drivers::driver_generic::{ModBusDriver, ModBusDriverError};
+use crate::driver_generic::{ModBusDriver, ModBusDriverError};
 use crate::modbus::{*};
 use core::result::Result;
 use core::error::Error;
@@ -18,7 +18,6 @@ pub struct SG90ModBusAdapter {
 
 impl SG90ModBusAdapter {
     pub fn new(cmd_reg_off: u16, angle_reg_off: u16, min_angle: u16, max_angle: u16, default_angle: u16, base_reg: u16, pin: u16) -> Self {
-        println!("Creating SG90 ModBus Adapter!");
         let driver = SG90Driver::new(min_angle, max_angle, default_angle, pin);
 
 
@@ -35,7 +34,6 @@ impl ModBusDriver for SG90ModBusAdapter {
     fn tick(&mut self, view: RegisterView) -> Result<(), ModBusDriverError> {
 
         let command: u16 = view.read_register(self.cmd_reg_off);
-        println!("Ticking SG90ModBusAdapter!");
         Ok(())
     }
 
@@ -58,7 +56,6 @@ pub struct SG90Driver {
 impl SG90Driver {
 
     pub fn new(min_angle: u16, max_angle: u16, default_angle: u16, pin: u16) -> Self {
-        println!("Creating SG90Driver!");
         SG90Driver {
             min_angle,
             max_angle,
@@ -68,14 +65,11 @@ impl SG90Driver {
     }
 
     pub fn move_to(angle: u16) {
-        println!("Moving SG90 to {} angle!", angle as f32 * 0.01)
     }
     
     pub fn reset() {
-        println!("Resetting SG90!")
     }
     
     pub fn calibrate() {
-        println!("Calibrating SG90!")
     }
 }

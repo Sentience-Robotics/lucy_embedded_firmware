@@ -1,6 +1,8 @@
-use crate::{pwm::PwmChannel};
-use crate::{modbus::RegisterView, modbus::ModbusAdapter, utils::map_range};
-use core::f32::consts::PI;
+use crate::pwm::PwmChannel;
+use crate::{
+    modbus::{ModbusAdapter, RegisterView},
+    utils::{deg_to_millirad, millirad_to_pulse},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -10,7 +12,8 @@ pub struct PwmServoConfig {
     pub max_pulse: u16,
     pub min_angle: u16,
     pub max_angle: u16,
-    pub default_angle: u16
+    /// Default angle in **degrees** (converted to milliradians on reset).
+    pub default_angle: u16,
 }
 
 pub struct PwmServoDriver<C> {
@@ -19,26 +22,22 @@ pub struct PwmServoDriver<C> {
 }
 
 impl<C: PwmChannel> PwmServoDriver<C> {
-    pub fn move_angle(&mut self, angle_rad: u16) {
-        let angle_deg = (angle_rad as f32 / 1000.0).to_degrees();
-        let clamped_deg = angle_deg.clamp(self.config.min_angle as f32, self.config.max_angle as f32);
-
-        let pulse = (map_range(
-            clamped_deg,
-            self.config.min_angle as f32,
-            self.config.max_angle as f32,
-            self.config.min_pulse as f32,
-            self.config.max_pulse as f32,
-        ) + 0.5) as u16;
-        self.channel.set_pwm(pulse);
+    /// `angle_millirad` is radians × 1000 (matches LucySystemHardware SHM encoding).
+    pub fn move_angle(&mut self, angle_millirad: u16) {
+        let pulse = millirad_to_pulse(
+            angle_millirad,
+            self.config.min_angle,
+            self.config.max_angle,
+            self.config.min_pulse,
+            self.config.max_pulse,
+        );
+        let _ = self.channel.set_pwm(pulse);
     }
 
     pub fn reset_angle(&mut self) {
-        self.move_angle(self.config.default_angle);
+        self.move_angle(deg_to_millirad(self.config.default_angle as f32));
     }
 }
-
-
 
 pub struct PwmServoModbusAdapter<'a, C> {
     pub base_register: u16,
@@ -55,13 +54,11 @@ impl<'a, C: PwmChannel> ModbusAdapter for PwmServoModbusAdapter<'a, C> {
             1 => {
                 let angle = rv.read_register(self.angle_reg_off);
                 self.driver.move_angle(angle);
-            },
+            }
             2 => {
                 self.driver.reset_angle();
-            },
-            _ => {
-
             }
+            _ => {}
         }
     }
 

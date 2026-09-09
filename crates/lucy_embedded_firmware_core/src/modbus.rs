@@ -147,15 +147,15 @@ pub fn parse_modbus_frame<'a>(slave: &'a Slave, frame: &'a[u8]) -> Result<Reques
     }
 }
 
-pub fn route_modbus_request(register_table: &RegisterTable, request: Request<'_>) -> Result<(), ModbusError> {
+pub fn route_modbus_request(register_table: &RegisterTable, request: Request<'_>) -> Result<usize, ModbusError> {
     match request {
         Request::ReadHoldingRegisters(addr, quantity) => {
             let registers = &register_table.registers[addr as usize..(addr + quantity) as usize];
-            Ok(())
+            Ok(0)
         },
         Request::WriteSingleRegister(addr, value) => {
             register_table.registers[addr as usize].set(value);
-            Ok(())
+            Ok(value as usize)
         },
         Request::WriteMultipleRegisters(addr, data) => {
             let end_addr = addr as usize + data.len();
@@ -167,7 +167,7 @@ pub fn route_modbus_request(register_table: &RegisterTable, request: Request<'_>
                     register_table.registers[addr as usize + i].set(value);
                 }
             }
-            Ok(())
+            Ok(0)
         },
         _ => {
             Err(ModbusError::UnknownOpcode)

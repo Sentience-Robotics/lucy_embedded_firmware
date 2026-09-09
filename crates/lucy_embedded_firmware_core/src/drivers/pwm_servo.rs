@@ -1,5 +1,6 @@
 use crate::{pwm::PwmChannel};
 use crate::{modbus::RegisterView, modbus::ModbusAdapter, utils::map_range};
+use core::f32::consts::PI;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -18,9 +19,17 @@ pub struct PwmServoDriver<C> {
 }
 
 impl<C: PwmChannel> PwmServoDriver<C> {
-    pub fn move_angle(&mut self, angle: u16) {
-        let angle = angle.clamp(self.config.min_angle, self.config.max_angle);
-        let pulse = map_range(angle as f32, self.config.min_angle as f32, self.config.max_angle as f32, self.config.min_pulse as f32, self.config.max_pulse as f32) as u16;
+    pub fn move_angle(&mut self, angle_rad: u16) {
+        let angle_deg = (angle_rad as f32 / 1000.0).to_degrees();
+        let clamped_deg = angle_deg.clamp(self.config.min_angle as f32, self.config.max_angle as f32);
+
+        let pulse = (map_range(
+            clamped_deg,
+            self.config.min_angle as f32,
+            self.config.max_angle as f32,
+            self.config.min_pulse as f32,
+            self.config.max_pulse as f32,
+        ) + 0.5) as u16;
         self.channel.set_pwm(pulse);
     }
 

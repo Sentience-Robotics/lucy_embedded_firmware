@@ -4,14 +4,21 @@ Rust firmware for Lucy RP2040 boards using **Modbus RTU over USB CDC**.
 
 ## Quick start (Pixi)
 
-From the `lucy_ws` root:
+From the `lucy_ws` root — **no sudo, no manual rustup/PATH config**:
 
 ```bash
-pixi run firmware-setup   # installs rustup (if needed), thumbv6m target, elf2uf2-rs
+pixi run firmware-setup   # once (or whenever the Pixi env is recreated)
 pixi run firmware-build
 pixi run firmware-test
 pixi run firmware-flash
 ```
+
+`firmware-build` / `firmware-test` / `firmware-flash` already depend on
+`firmware-setup`, so a single `pixi run firmware-build` is enough after clone.
+
+Toolchain files live inside the Pixi env (`$CONDA_PREFIX/cargo` +
+`$CONDA_PREFIX/rustup`), activated automatically via
+`scripts/firmware_cargo_env.sh` (`.bat` on Windows).
 
 ## Layout
 

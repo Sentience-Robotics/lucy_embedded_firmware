@@ -1,5 +1,5 @@
 use std::io::{Read, Write};
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::fmt;
 use std::time::Duration;
 use core::cell::Cell;
@@ -11,6 +11,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
 use libc;
 use std::ffi::CString;
+use std::os::fd::FromRawFd;
 
 
 #[repr(C)]
@@ -61,6 +62,14 @@ impl PosixNamedSem {
                 val as libc::c_uint,
             )
         };
+        // SEM_FAILED stored unchecked would surface as UB on the first wait().
+        // macOS caps these names at 30 bytes, so a long node name lands here.
+        if sem == libc::SEM_FAILED {
+            panic!(
+                "sem_open(\"{name}\") failed: {}",
+                std::io::Error::last_os_error(),
+            );
+        }
         PosixNamedSem {
             sem: sem,
             name: c_name,
@@ -167,26 +176,59 @@ fn write_register(
     frame
 }
 
+fn node_name() -> String {
+    std::env::args()
+        .nth(1)
+        .or_else(|| std::env::var("LUCY_NODE_NAME").ok())
+        .filter(|n| !n.is_empty())
+        .unwrap_or_else(|| "lucy".to_string())
+}
+
+fn open_shm(name: &str, min_len: usize) -> File {
+    let c_name = CString::new(name).expect("shm name contains a NUL byte");
+    let fd = unsafe { libc::shm_open(c_name.as_ptr(), libc::O_RDWR, 0o666 as libc::c_uint) };
+    if fd == -1 {
+        panic!(
+            "shm_open(\"{name}\") failed: {}. Is the ROS 2 stack running with node_name={}?",
+            std::io::Error::last_os_error(),
+            name.trim_start_matches('/').split('.').next().unwrap_or(name),
+        );
+    }
+    let file = unsafe { File::from_raw_fd(fd) };
+    let len = file
+        .metadata()
+        .unwrap_or_else(|e| panic!("stat on shm object \"{name}\" failed: {e}"))
+        .len() as usize;
+    if len < min_len {
+        panic!("shm object \"{name}\" is {len} bytes, expected at least {min_len}");
+    }
+    file
+}
+
 fn main() {
-    let mut reg_table_file = std::fs::OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open("/dev/shm/lucy_hardware_interface_so_arm.lucy_reg_table").unwrap();
-    let mut mmap = unsafe { MmapMut::map_mut(&reg_table_file).unwrap() };
+    let node = node_name();
+    println!("Attaching to Lucy shared memory for node_name={node}");
+
+    let reg_table_file = open_shm(
+        &format!("/{node}.lucy_reg_table"),
+        size_of::<RegisterTable>(),
+    );
+    // Kept in scope: dropping the mapping would invalidate `rt`.
+    let table_map = unsafe { MmapMut::map_mut(&reg_table_file).unwrap() };
     let rt: &RegisterTable = unsafe {
-        &*(mmap.as_ptr() as *const RegisterTable)
+        &*(table_map.as_ptr() as *const RegisterTable)
     };
 
-    let mut reg_header_file = std::fs::OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open("/dev/shm/lucy_hardware_interface_so_arm.lucy_reg_header").unwrap();
-    let mut mmap = unsafe { MmapMut::map_mut(&reg_header_file).unwrap() };
+    let reg_header_file = open_shm(
+        &format!("/{node}.lucy_reg_header"),
+        size_of::<RegisterHeader>(),
+    );
+    let mut header_map = unsafe { MmapMut::map_mut(&reg_header_file).unwrap() };
     let rh: &mut RegisterHeader = unsafe {
-        &mut *(mmap.as_ptr() as *mut RegisterHeader)
+        &mut *(header_map.as_mut_ptr() as *mut RegisterHeader)
     };
 
-    let sem = PosixNamedSem::create("/lucy_hardware_interface_so_arm", 1);
+    let sem = PosixNamedSem::create(&format!("/{node}"), 1);
     let target_vid = 0x16c0;
     let target_pid = 0x27dd;
 

@@ -176,11 +176,6 @@ fn write_register(
     frame
 }
 
-/// Node name the ROS 2 hardware interface used to name its shared-memory objects.
-///
-/// Mirrors LucySystemHardware's `node_name` hardware parameter (default `lucy`),
-/// so the two sides agree without either hard-coding a robot. Override with
-/// argv[1] or LUCY_NODE_NAME to attach to a differently-named instance.
 fn node_name() -> String {
     std::env::args()
         .nth(1)
@@ -189,12 +184,6 @@ fn node_name() -> String {
         .unwrap_or_else(|| "lucy".to_string())
 }
 
-/// Open an existing POSIX shared-memory object by name.
-///
-/// shm_open rather than a path under /dev/shm: that directory is Linux-only and
-/// macOS gives these objects no filesystem entry at all. The hardware interface
-/// owns the segment, so O_CREAT is deliberately not passed - failing here is the
-/// right outcome when the ROS 2 side is not up yet.
 fn open_shm(name: &str, min_len: usize) -> File {
     let c_name = CString::new(name).expect("shm name contains a NUL byte");
     let fd = unsafe { libc::shm_open(c_name.as_ptr(), libc::O_RDWR, 0o666 as libc::c_uint) };
@@ -205,13 +194,11 @@ fn open_shm(name: &str, min_len: usize) -> File {
             name.trim_start_matches('/').split('.').next().unwrap_or(name),
         );
     }
-    // Takes ownership of the descriptor, so it closes with the File.
     let file = unsafe { File::from_raw_fd(fd) };
     let len = file
         .metadata()
         .unwrap_or_else(|e| panic!("stat on shm object \"{name}\" failed: {e}"))
         .len() as usize;
-    // mmap covers the whole object; reading a struct out of a shorter one is UB.
     if len < min_len {
         panic!("shm object \"{name}\" is {len} bytes, expected at least {min_len}");
     }

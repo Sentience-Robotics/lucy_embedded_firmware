@@ -7,7 +7,6 @@ fn compute_checksum(payload: &[u8]) -> u8 {
 }
 
 pub struct BusServoConfig {
-    pub id: u8,
     pub min_pulse: u16,
     pub max_pulse: u16,
     pub min_angle: u16,
@@ -21,7 +20,7 @@ pub struct BusServoDriver<U> {
 }
 
 impl<U: UartChannel> BusServoDriver<U> {
-    pub fn enable_led(&mut self, enable: bool) {
+    pub fn enable_led(&mut self, id: u8, enable: bool) {
         const REG: u8 = 0x2F;
         const INST_WRITE: u8 = 0x03;
         let length = 4u8;
@@ -30,7 +29,7 @@ impl<U: UartChannel> BusServoDriver<U> {
         let mut frame = [
             0xFF,
             0xFF,
-            self.config.id,
+            id,
             length,
             INST_WRITE,
             REG,
@@ -45,7 +44,7 @@ impl<U: UartChannel> BusServoDriver<U> {
         self.channel.write(&frame);
     }
 
-    pub fn set_servo_mode(&mut self) {
+    pub fn set_servo_mode(&mut self, id: u8) {
         const REG_TORQUE_ENABLE: u8 = 0x21;
         const INST_WRITE: u8 = 0x03;
         let length = 4u8;
@@ -54,7 +53,7 @@ impl<U: UartChannel> BusServoDriver<U> {
         let mut frame = [
             0xFF,
             0xFF,
-            self.config.id,
+            id,
             length,
             INST_WRITE,
             REG_TORQUE_ENABLE,
@@ -69,7 +68,7 @@ impl<U: UartChannel> BusServoDriver<U> {
         self.channel.write(&frame);
     }
 
-    pub fn enable_torque(&mut self, enable: bool) {
+    pub fn enable_torque(&mut self, id: u8, enable: bool) {
         const REG_TORQUE_ENABLE: u8 = 0x28;
         const INST_WRITE: u8 = 0x03;
         let length = 4u8;
@@ -78,7 +77,7 @@ impl<U: UartChannel> BusServoDriver<U> {
         let mut frame = [
             0xFF,
             0xFF,
-            self.config.id,
+            id,
             length,
             INST_WRITE,
             REG_TORQUE_ENABLE,
@@ -93,7 +92,19 @@ impl<U: UartChannel> BusServoDriver<U> {
         self.channel.write(&frame);
     }
 
-    pub fn move_angle(&mut self, angle: u16) {
+    pub fn move_angle(&mut self, id: u8, angle_rad: u16) {
+        let angle_deg = (angle_rad as f32 / 1000.0).to_degrees();
+        let clamped_deg = angle_deg.clamp(0 as f32, 360 as f32);
+        let pulse = (map_range(
+            clamped_deg,
+            self.config.min_angle as f32,
+            self.config.max_angle as f32,
+            self.config.min_pulse as f32,
+            self.config.max_pulse as f32,
+        ) + 0.5) as u16;
+
+
+
         const REG_TARGET_POSITION: u8 = 0x2A;
         const INST_WRITE: u8 = 0x03;
         let length = 9u8;
@@ -101,14 +112,14 @@ impl<U: UartChannel> BusServoDriver<U> {
         let time: u16 = 0;
         let speed: u16 = 1000;
 
-        let [pos_l, pos_h] = angle.to_le_bytes();
+        let [pos_l, pos_h] = pulse.to_le_bytes();
         let [time_l, time_h] = time.to_le_bytes();
         let [spd_l, spd_h] = speed.to_le_bytes();
 
         let mut frame = [
             0xFF,
             0xFF,
-            self.config.id,
+            id,
             length,
             INST_WRITE,
             REG_TARGET_POSITION,
@@ -132,6 +143,7 @@ impl<U: UartChannel> BusServoDriver<U> {
 pub struct BusServoModbusAdapter<'a, U> {
     pub base_register: u16,
     pub cmd_reg_off: u16,
+    pub id_reg_off: u16,
     pub angle_reg_off: u16,
     pub driver: &'a mut BusServoDriver<U>,
 }
@@ -139,20 +151,21 @@ pub struct BusServoModbusAdapter<'a, U> {
 impl<'a, U: UartChannel> ModbusAdapter for BusServoModbusAdapter<'a, U> {
     fn tick(&mut self, rv: &mut RegisterView) {
         let cmd = rv.read_register(self.cmd_reg_off);
+        let id = rv.read_register(self.id_reg_off) as u8;
         rv.write_register(self.cmd_reg_off, 0);
         match cmd {
             1 => {
                 let angle = rv.read_register(self.angle_reg_off);
-                self.driver.move_angle(angle);
+                self.driver.move_angle(id, angle);
             },
             2 => {
-                self.driver.set_servo_mode();
+                self.driver.set_servo_mode(id);
             },
             3 => {
-                self.driver.enable_torque(true);
+                self.driver.enable_torque(id, true);
             },
             4 => {
-                self.driver.enable_led(false);
+                self.driver.enable_led(id, false);
             },
             _ => {
 

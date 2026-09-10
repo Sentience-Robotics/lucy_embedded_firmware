@@ -168,13 +168,10 @@ fn write_register(
 }
 
 fn main() {
-    let angle: u16 = ((1000 as f32 / 1000f32) * (180.0 / 3.14)) as u16;
-    println!("{}", angle);
-
     let mut reg_table_file = std::fs::OpenOptions::new()
         .read(true)
         .write(true)
-        .open("/dev/shm/lucy_hardware_interface_left_arm.lucy_reg_table").unwrap();
+        .open("/dev/shm/lucy_hardware_interface_so_arm.lucy_reg_table").unwrap();
     let mut mmap = unsafe { MmapMut::map_mut(&reg_table_file).unwrap() };
     let rt: &RegisterTable = unsafe {
         &*(mmap.as_ptr() as *const RegisterTable)
@@ -183,13 +180,13 @@ fn main() {
     let mut reg_header_file = std::fs::OpenOptions::new()
         .read(true)
         .write(true)
-        .open("/dev/shm/lucy_hardware_interface_left_arm.lucy_reg_header").unwrap();
+        .open("/dev/shm/lucy_hardware_interface_so_arm.lucy_reg_header").unwrap();
     let mut mmap = unsafe { MmapMut::map_mut(&reg_header_file).unwrap() };
     let rh: &mut RegisterHeader = unsafe {
         &mut *(mmap.as_ptr() as *mut RegisterHeader)
     };
 
-    let sem = PosixNamedSem::create("/lucy_hardware_interface_left_arm", 1);
+    let sem = PosixNamedSem::create("/lucy_hardware_interface_so_arm", 1);
     let target_vid = 0x16c0;
     let target_pid = 0x27dd;
 

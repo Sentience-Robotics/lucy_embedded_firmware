@@ -34,18 +34,16 @@ impl<'a> Write for BufferWriter<'a> {
 mod channel;
 use channel::Rp2040PwmChannel;
 mod config;
-use config::Robot;
+use config::{Robot, config};
 
-use lucy_embedded_firmware_core::pwm::{PwmChannel};
-use lucy_embedded_firmware_core::uart::UartChannel;
-use lucy_embedded_firmware_core::drivers::pwm_servo::{PwmServoDriver, PwmServoConfig, PwmServoModbusAdapter};
-use lucy_embedded_firmware_core::drivers::bus_servo::{BusServoDriver, BusServoConfig, BusServoModbusAdapter};
-use lucy_embedded_firmware_core::modbus::{
-    ModbusError,
-    ModbusAdapter,
-    RegisterView, RegisterTable,
-    Slave,
-    parse_modbus_frame, route_modbus_request
+use lucy_embedded_firmware_core::{
+    pwm::{PwmChannel},
+    uart::UartChannel,
+    drivers::{
+        pwm_servo::{PwmServoDriver, PwmServoConfig, PwmServoModbusAdapter},
+        bus_servo::{BusServoDriver, BusServoConfig, BusServoModbusAdapter},
+    },
+    modbus::{ModbusError, ModbusAdapter, RegisterView, RegisterTable, Slave, parse_modbus_frame, route_modbus_request}
 };
 
 use embedded_hal::{
@@ -80,10 +78,6 @@ use usbd_serial::SerialPort;
 use cortex_m_rt::entry;
 use panic_halt as _;
 
-#[unsafe(link_section = ".boot2")]
-#[unsafe(no_mangle)]
-#[used]
-pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_GENERIC_03H;
 
 enum UartError {
 
@@ -117,6 +111,12 @@ where
         Ok(0)
     }
 }
+
+#[unsafe(link_section = ".boot2")]
+#[unsafe(no_mangle)]
+#[used]
+pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_GENERIC_03H;
+
 
 #[entry]
 fn main() -> ! {
@@ -157,228 +157,13 @@ fn main() -> ! {
     leds[0] = RGB8 { r: 100, g: 0, b: 0 };
     ws.write(leds.iter().cloned()).unwrap();
 
-
-    
-
     let mut rt = RegisterTable::default();
 
-    let pwm_slices = Slices::new(pac.PWM, &mut pac.RESETS);
+    //let pwm_slices = Slices::new(pac.PWM, &mut pac.RESETS);
+    //config(&mut rt, pwm_slices,
+    //    pins.gpio6, pins.gpio7, pins.gpio8, pins.gpio9, pins.gpio10, pins.gpio11);
 
-    // SERVO 1 7 WRIST
-    let mut pwm = pwm_slices.pwm3;
-    pwm.set_div_int(125);
-    pwm.set_top(20000 - 1);
-    pwm.channel_a.output_to(pins.gpio6);
-    pwm.channel_b.output_to(pins.gpio7);
-    pwm.enable();
-
-    let mut channel_pwm = Rp2040PwmChannel {
-        channel: pwm.channel_a,
-    };
-
-    let mut driver_config = PwmServoConfig {
-        min_pulse: 500,
-        max_pulse: 2500,
-        min_angle: 0,
-        max_angle: 300,
-        default_angle: 90
-    };
-
-    let mut driver = PwmServoDriver {
-        config: driver_config,
-        channel: channel_pwm
-    };
-
-    let mut adapter1 = PwmServoModbusAdapter {
-        base_register: 0x00,
-        cmd_reg_off: 0,
-        angle_reg_off: 1,
-        driver: &mut driver
-    };
-    let mut rv1 = RegisterView {
-        table: &rt,
-        base_register: 0x00,
-        nb_register: 2
-    };
-
-    // SERVO 2
-    let mut channel_pwm2 = Rp2040PwmChannel {
-        channel: pwm.channel_b,
-    };
-
-    let mut driver_config2 = PwmServoConfig {
-        min_pulse: 1000,
-        max_pulse: 2000,
-        min_angle: 0,
-        max_angle: 300,
-        default_angle: 90
-    };
-
-    let mut driver2 = PwmServoDriver {
-        config: driver_config2,
-        channel: channel_pwm2
-    };
-
-    let mut adapter2 = PwmServoModbusAdapter {
-        base_register: 0x00,
-        cmd_reg_off: 0,
-        angle_reg_off: 1,
-        driver: &mut driver2
-    };
-    let mut rv2 = RegisterView {
-        table: &rt,
-        base_register: 0x02,
-        nb_register: 0
-    };
-
-    // SERVO 3
-    let mut pwm = pwm_slices.pwm4;
-    pwm.set_div_int(125);
-    pwm.set_top(20000 - 1);
-    pwm.channel_a.output_to(pins.gpio8);
-    pwm.channel_b.output_to(pins.gpio9);
-    pwm.enable();
-    let mut channel_pwm = Rp2040PwmChannel {
-        channel: pwm.channel_a,
-    };
-
-    let mut driver_config = PwmServoConfig {
-        min_pulse: 600,
-        max_pulse: 2500,
-        min_angle: 0,
-        max_angle: 180,
-        default_angle: 90
-    };
-
-    let mut driver3 = PwmServoDriver {
-        config: driver_config,
-        channel: channel_pwm
-    };
-
-    let mut adapter3 = PwmServoModbusAdapter {
-        base_register: 0x00,
-        cmd_reg_off: 0,
-        angle_reg_off: 1,
-        driver: &mut driver3
-    };
-    let mut rv3 = RegisterView {
-        table: &rt,
-        base_register: 0x04,
-        nb_register: 2
-    };
-
-    // SERVO 4
-      let mut channel_pwm = Rp2040PwmChannel {
-        channel: pwm.channel_b,
-    };
-
-    let mut driver_config = PwmServoConfig {
-        min_pulse: 600,
-        max_pulse: 2500,
-        min_angle: 0,
-        max_angle: 180,
-        default_angle: 90
-    };
-
-    let mut driver = PwmServoDriver {
-        config: driver_config,
-        channel: channel_pwm
-    };
-
-    let mut adapter4 = PwmServoModbusAdapter {
-        base_register: 0x00,
-        cmd_reg_off: 0,
-        angle_reg_off: 1,
-        driver: &mut driver
-    };
-    let mut rv4 = RegisterView {
-        table: &rt,
-        base_register: 0x06,
-        nb_register: 2
-    };
-
-    // SERVO 5
-    let mut pwm = pwm_slices.pwm5;
-    pwm.set_div_int(125);
-    pwm.set_top(20000 - 1);
-    pwm.channel_a.output_to(pins.gpio10);
-    pwm.channel_b.output_to(pins.gpio11);
-    pwm.enable();
-    let mut channel_pwm = Rp2040PwmChannel {
-        channel: pwm.channel_a,
-    };
-
-    let mut driver_config = PwmServoConfig {
-        min_pulse: 600,
-        max_pulse: 2500,
-        min_angle: 0,
-        max_angle: 180,
-        default_angle: 90
-    };
-
-    let mut driver = PwmServoDriver {
-        config: driver_config,
-        channel: channel_pwm
-    };
-
-    let mut adapter5 = PwmServoModbusAdapter {
-        base_register: 0x00,
-        cmd_reg_off: 0,
-        angle_reg_off: 1,
-        driver: &mut driver
-    };
-    let mut rv5 = RegisterView {
-        table: &rt,
-        base_register: 0x08,
-        nb_register: 2
-    };
-
-    // SERVO 6
-    let mut channel_pwm = Rp2040PwmChannel {
-        channel: pwm.channel_b,
-    };
-
-    let mut driver_config = PwmServoConfig {
-        min_pulse: 600,
-        max_pulse: 2500,
-        min_angle: 0,
-        max_angle: 180,
-        default_angle: 90
-    };
-
-    let mut driver = PwmServoDriver {
-        config: driver_config,
-        channel: channel_pwm
-    };
-
-    let mut adapter6 = PwmServoModbusAdapter {
-        base_register: 0x00,
-        cmd_reg_off: 0,
-        angle_reg_off: 1,
-        driver: &mut driver
-    };
-    let mut rv6 = RegisterView {
-        table: &rt,
-        base_register: 0x0A,
-        nb_register: 2
-    };
-
-    let mut robot = Robot {
-        servo1: adapter1,
-        servo2: adapter2,
-        servo3: adapter3,
-        servo4: adapter4,
-        servo5: adapter5,
-        servo6: adapter6,
-    };
-
-
-
-
-
-
-
-
+    // LeRobot
     let uart = UartPeripheral::new(
         pac.UART0,
         (uart_tx, uart_rx),
@@ -393,14 +178,37 @@ fn main() -> ! {
         clocks.peripheral_clock.freq(),
     ).unwrap();
 
-    let uart_channel = Rp2040UartChannel {
+    let channel_uart = Rp2040UartChannel {
         dir: dir_pin,
         uart: uart
     };
 
-    /* PWM */
+    let mut driver_config = BusServoConfig {
+        min_pulse: 0,
+        max_pulse: 4096,
+        min_angle: 0,
+        max_angle: 360,
+        default_angle: 90
+    };
 
+    let mut driver = BusServoDriver {
+        config: driver_config,
+        channel: channel_uart
+    };
 
+    let mut adapter7 = BusServoModbusAdapter {
+        base_register: 0x00,
+        cmd_reg_off: 0,
+        id_reg_off: 1,
+        angle_reg_off: 2,
+        driver: &mut driver
+    };
+
+    let mut rv7 = RegisterView {
+        table: &rt,
+        base_register: 0x00,
+        nb_register: 2
+    };
 
     /* USB */
 
@@ -496,12 +304,13 @@ fn main() -> ! {
             }
             rx_len = 0;
         }
-        robot.servo1.tick(&mut rv1);
-        robot.servo2.tick(&mut rv2);
-        robot.servo3.tick(&mut rv3);
-        robot.servo4.tick(&mut rv4);
-        robot.servo5.tick(&mut rv5);
-        robot.servo6.tick(&mut rv6);
+        //robot.servo1.tick(&mut rv1);
+        //robot.servo2.tick(&mut rv2);
+        //robot.servo3.tick(&mut rv3);
+        //robot.servo4.tick(&mut rv4);
+        //robot.servo5.tick(&mut rv5);
+        //robot.servo6.tick(&mut rv6);
+        adapter7.tick(&mut rv7);
 
 
         /*

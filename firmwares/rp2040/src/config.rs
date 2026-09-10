@@ -5,9 +5,9 @@ use rp2040_hal::{
     fugit::RateExtU32,
     fugit::MicrosDuration,
     clocks::init_clocks_and_plls,
-    gpio::{bank0, Pins, FunctionPio0, FunctionUart, FunctionPwm, FunctionI2C, PullUp, PullDown},
+    gpio::{bank0, Pin, Pins, FunctionPio0, FunctionUart, FunctionPwm, FunctionI2C, FunctionNull, PullUp, PullDown},
     i2c::I2C,
-    pwm::{Slices, Pwm0, Pwm4, Slice, FreeRunning},
+    pwm::{Slices, A, B, Pwm0, Pwm3, Pwm4, Pwm5, Pwm6, Slice, FreeRunning, Channel},
     pio::PIOExt,
     sio::Sio,
     timer::Timer,
@@ -22,35 +22,250 @@ use embedded_hal::{
     i2c::I2c,
 };
 
-use lucy_embedded_firmware_core::pwm::{PwmChannel};
-use lucy_embedded_firmware_core::uart::UartChannel;
-use lucy_embedded_firmware_core::drivers::pwm_servo::{PwmServoDriver, PwmServoConfig, PwmServoModbusAdapter};
-use lucy_embedded_firmware_core::drivers::bus_servo::{BusServoDriver, BusServoConfig, BusServoModbusAdapter};
-use lucy_embedded_firmware_core::modbus::{
-    ModbusError,
-    ModbusAdapter,
-    RegisterView, RegisterTable,
-    Slave,
-    parse_modbus_frame, route_modbus_request
+use lucy_embedded_firmware_core::{
+    pwm::{PwmChannel},
+    uart::UartChannel,
+    drivers::{
+        pwm_servo::{PwmServoDriver, PwmServoConfig, PwmServoModbusAdapter},
+        bus_servo::{BusServoDriver, BusServoConfig, BusServoModbusAdapter},
+    },
+    modbus::{ModbusError, ModbusAdapter, RegisterView, RegisterTable, Slave, parse_modbus_frame, route_modbus_request}
 };
 
 use crate::channel::Rp2040PwmChannel;
 
-type Servo<'a, T> = PwmServoModbusAdapter<'a, Rp2040PwmChannel<T>>;
+type Gpio6 = Pin<bank0::Gpio6, FunctionNull, PullDown>;
+type Gpio7 = Pin<bank0::Gpio7, FunctionNull, PullDown>;
+type Gpio8 = Pin<bank0::Gpio8, FunctionNull, PullDown>;
+type Gpio9 = Pin<bank0::Gpio9, FunctionNull, PullDown>;
+type Gpio10 = Pin<bank0::Gpio10, FunctionNull, PullDown>;
+type Gpio11 = Pin<bank0::Gpio11, FunctionNull, PullDown>;
 
-pub struct Robot<'a, C, D, E, F, G, H>
-where
-    C: SetDutyCycle,
-    D: SetDutyCycle,
-    E: SetDutyCycle,
-    F: SetDutyCycle,
-    G: SetDutyCycle,
-    H: SetDutyCycle,
-{
-    pub servo1: Servo<'a, C>, 
-    pub servo2: Servo<'a, D>, 
-    pub servo3: Servo<'a, E>, 
-    pub servo4: Servo<'a, F>, 
-    pub servo5: Servo<'a, G>, 
-    pub servo6: Servo<'a, H>,
+type Servo7 = Rp2040PwmChannel<Channel<Slice<Pwm3, FreeRunning>, A>>;
+type Servo8 = Rp2040PwmChannel<Channel<Slice<Pwm3, FreeRunning>, B>>;
+type Servo9 = Rp2040PwmChannel<Channel<Slice<Pwm4, FreeRunning>, A>>;
+type Servo10 = Rp2040PwmChannel<Channel<Slice<Pwm4, FreeRunning>, B>>;
+type Servo11 = Rp2040PwmChannel<Channel<Slice<Pwm5, FreeRunning>, A>>;
+type Servo12 = Rp2040PwmChannel<Channel<Slice<Pwm5, FreeRunning>, B>>;
+
+pub struct Robot {
+    pub servo1: PwmServoModbusAdapter<180, Servo7>,
+    pub servo2: PwmServoModbusAdapter<180, Servo8>, 
+    pub servo3: PwmServoModbusAdapter<180, Servo9>, 
+    pub servo4: PwmServoModbusAdapter<180, Servo10>, 
+    pub servo5: PwmServoModbusAdapter<180, Servo11>, 
+    pub servo6: PwmServoModbusAdapter<180, Servo12>,
+}
+
+pub fn config(
+    rt: &mut RegisterTable, slices: Slices,
+    gpio6: Gpio6, gpio7: Gpio7, gpio8: Gpio8, gpio9: Gpio9, gpio10: Gpio10, gpio11: Gpio11,
+) -> Robot {
+    // SERVO 1 7 WRIST
+    let mut pwm = slices.pwm3;
+    pwm.set_div_int(125);
+    pwm.set_top(20000 - 1);
+    pwm.channel_a.output_to(gpio6);
+    pwm.channel_b.output_to(gpio7);
+    pwm.enable();
+
+    let mut channel_pwm = Rp2040PwmChannel {
+        channel: pwm.channel_a,
+    };
+
+    let mut driver_config = PwmServoConfig {
+        min_pulse: 500,
+        max_pulse: 2500,
+        min_angle: 0,
+        max_angle: 300,
+        default_angle: 90
+    };
+
+    let mut driver = PwmServoDriver {
+        config: driver_config,
+        channel: channel_pwm
+    };
+
+    let mut adapter1 = PwmServoModbusAdapter {
+        base_register: 0x00,
+        cmd_reg_off: 0,
+        angle_reg_off: 1,
+        driver: driver
+    };
+    let mut rv1 = RegisterView {
+        table: &rt,
+        base_register: 0x00,
+        nb_register: 2
+    };
+
+    // SERVO 2
+    let mut channel_pwm2 = Rp2040PwmChannel {
+        channel: pwm.channel_b,
+    };
+
+    let mut driver_config2 = PwmServoConfig {
+        min_pulse: 1000,
+        max_pulse: 2000,
+        min_angle: 0,
+        max_angle: 300,
+        default_angle: 90
+    };
+
+    let mut driver2 = PwmServoDriver {
+        config: driver_config2,
+        channel: channel_pwm2
+    };
+
+    let mut adapter2 = PwmServoModbusAdapter {
+        base_register: 0x00,
+        cmd_reg_off: 0,
+        angle_reg_off: 1,
+        driver: driver2
+    };
+    let mut rv2 = RegisterView {
+        table: &rt,
+        base_register: 0x02,
+        nb_register: 0
+    };
+
+    // SERVO 3
+    let mut pwm = slices.pwm4;
+    pwm.set_div_int(125);
+    pwm.set_top(20000 - 1);
+    pwm.channel_a.output_to(gpio8);
+    pwm.channel_b.output_to(gpio9);
+    pwm.enable();
+    let mut channel_pwm = Rp2040PwmChannel {
+        channel: pwm.channel_a,
+    };
+
+    let mut driver_config = PwmServoConfig {
+        min_pulse: 600,
+        max_pulse: 2500,
+        min_angle: 0,
+        max_angle: 180,
+        default_angle: 90
+    };
+
+    let mut driver3 = PwmServoDriver {
+        config: driver_config,
+        channel: channel_pwm
+    };
+
+    let mut adapter3 = PwmServoModbusAdapter {
+        base_register: 0x00,
+        cmd_reg_off: 0,
+        angle_reg_off: 1,
+        driver: driver3
+    };
+    let mut rv3 = RegisterView {
+        table: &rt,
+        base_register: 0x04,
+        nb_register: 2
+    };
+
+    // SERVO 4
+      let mut channel_pwm = Rp2040PwmChannel {
+        channel: pwm.channel_b,
+    };
+
+    let mut driver_config = PwmServoConfig {
+        min_pulse: 600,
+        max_pulse: 2500,
+        min_angle: 0,
+        max_angle: 180,
+        default_angle: 90
+    };
+
+    let mut driver = PwmServoDriver {
+        config: driver_config,
+        channel: channel_pwm
+    };
+
+    let mut adapter4 = PwmServoModbusAdapter {
+        base_register: 0x00,
+        cmd_reg_off: 0,
+        angle_reg_off: 1,
+        driver: driver
+    };
+    let mut rv4 = RegisterView {
+        table: &rt,
+        base_register: 0x06,
+        nb_register: 2
+    };
+
+    // SERVO 5
+    let mut pwm = slices.pwm5;
+    pwm.set_div_int(125);
+    pwm.set_top(20000 - 1);
+    pwm.channel_a.output_to(gpio10);
+    pwm.channel_b.output_to(gpio11);
+    pwm.enable();
+    let mut channel_pwm = Rp2040PwmChannel {
+        channel: pwm.channel_a,
+    };
+
+    let mut driver_config = PwmServoConfig {
+        min_pulse: 600,
+        max_pulse: 2500,
+        min_angle: 0,
+        max_angle: 180,
+        default_angle: 90
+    };
+
+    let mut driver = PwmServoDriver {
+        config: driver_config,
+        channel: channel_pwm
+    };
+
+    let mut adapter5 = PwmServoModbusAdapter {
+        base_register: 0x00,
+        cmd_reg_off: 0,
+        angle_reg_off: 1,
+        driver: driver
+    };
+    let mut rv5 = RegisterView {
+        table: &rt,
+        base_register: 0x08,
+        nb_register: 2
+    };
+
+    // SERVO 6
+    let mut channel_pwm = Rp2040PwmChannel {
+        channel: pwm.channel_b,
+    };
+
+    let mut driver_config = PwmServoConfig {
+        min_pulse: 600,
+        max_pulse: 2500,
+        min_angle: 0,
+        max_angle: 180,
+        default_angle: 90
+    };
+
+    let mut driver = PwmServoDriver {
+        config: driver_config,
+        channel: channel_pwm
+    };
+
+    let mut adapter6 = PwmServoModbusAdapter {
+        base_register: 0x00,
+        cmd_reg_off: 0,
+        angle_reg_off: 1,
+        driver: driver
+    };
+    let mut rv6 = RegisterView {
+        table: &rt,
+        base_register: 0x0A,
+        nb_register: 2
+    };
+
+    Robot {
+        servo1: adapter1,
+        servo2: adapter2,
+        servo3: adapter3,
+        servo4: adapter4,
+        servo5: adapter5,
+        servo6: adapter6,
+    }
 }

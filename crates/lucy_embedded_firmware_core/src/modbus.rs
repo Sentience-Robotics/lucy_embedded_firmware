@@ -27,6 +27,15 @@ pub trait ModbusAdapter {
     fn get_base_register(&self) -> u16;
 }
 
+pub struct ModbusRedirect {
+    pub source: u16,
+    pub destination: u16,
+}
+
+impl ModbusRedirect {
+
+}
+
 /* WIP */
 
 pub enum Access {

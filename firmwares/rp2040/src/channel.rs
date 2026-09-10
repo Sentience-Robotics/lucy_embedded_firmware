@@ -11,7 +11,7 @@ use rp2040_hal::{
     fugit::RateExtU32,
     fugit::MicrosDuration,
     clocks::init_clocks_and_plls,
-    gpio::{Pins, FunctionPio0, FunctionPwm, FunctionI2C, PullUp},
+    gpio::{bank0, Pins, FunctionPio0, FunctionPwm, FunctionI2C, PullUp},
     pac,
     i2c::I2C,
     pwm::{Slices, AnySlice, Slice, SliceId, Channel, ChannelId, FreeRunning, A, B},
@@ -44,5 +44,4 @@ where
         Ok(())
     }
 }
-
 

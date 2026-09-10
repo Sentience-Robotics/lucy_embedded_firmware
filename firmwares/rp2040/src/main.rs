@@ -159,9 +159,9 @@ fn main() -> ! {
 
     let mut rt = RegisterTable::default();
 
-    //let pwm_slices = Slices::new(pac.PWM, &mut pac.RESETS);
-    //config(&mut rt, pwm_slices,
-    //    pins.gpio6, pins.gpio7, pins.gpio8, pins.gpio9, pins.gpio10, pins.gpio11);
+    let pwm_slices = Slices::new(pac.PWM, &mut pac.RESETS);
+    let mut robot = config(&mut rt, pwm_slices,
+        pins.gpio6, pins.gpio7, pins.gpio8, pins.gpio9, pins.gpio10, pins.gpio11);
 
     // LeRobot
     let uart = UartPeripheral::new(
@@ -304,21 +304,8 @@ fn main() -> ! {
             }
             rx_len = 0;
         }
-        //robot.servo1.tick(&mut rv1);
-        //robot.servo2.tick(&mut rv2);
-        //robot.servo3.tick(&mut rv3);
-        //robot.servo4.tick(&mut rv4);
-        //robot.servo5.tick(&mut rv5);
-        //robot.servo6.tick(&mut rv6);
+        robot.tick(&rt);
+
         adapter7.tick(&mut rv7);
-
-
-        /*
-
-        rv.write_register(1, angle);
-        rv.write_register(0, 1);
-        angle += 100;
-        adapter.tick(&mut rv);
-        delay.delay_ms(2000);*/
     }
 }

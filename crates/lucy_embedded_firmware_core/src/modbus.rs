@@ -22,7 +22,7 @@ pub enum ModbusError {
 }
 
 pub trait ModbusAdapter {
-    fn tick(&mut self, rv: &mut RegisterView);
+    fn tick(&mut self, rv: &RegisterView);
     fn get_nb_register(&self) -> u16;
     fn get_base_register(&self) -> u16;
 }
@@ -109,7 +109,7 @@ impl<'a> RegisterView<'a> {
         }
     }
 
-    pub fn write_register(&mut self, index: u16, value: u16) {
+    pub fn write_register(&self, index: u16, value: u16) {
         if index > self.nb_register {
             return;
         }

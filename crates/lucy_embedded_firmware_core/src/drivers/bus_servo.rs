@@ -149,7 +149,7 @@ pub struct BusServoModbusAdapter<'a, U> {
 }
 
 impl<'a, U: UartChannel> ModbusAdapter for BusServoModbusAdapter<'a, U> {
-    fn tick(&mut self, rv: &mut RegisterView) {
+    fn tick(&mut self, rv: &RegisterView) {
         let cmd = rv.read_register(self.cmd_reg_off);
         let id = rv.read_register(self.id_reg_off) as u8;
         rv.write_register(self.cmd_reg_off, 0);

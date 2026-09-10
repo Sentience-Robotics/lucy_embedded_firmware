@@ -55,7 +55,7 @@ pub struct PwmServoModbusAdapter<const A: u16, C> {
 }
 
 impl<const A: u16, C: PwmChannel> ModbusAdapter for PwmServoModbusAdapter<A, C> {
-    fn tick(&mut self, rv: &mut RegisterView) {
+    fn tick(&mut self, rv: &RegisterView) {
         let cmd = rv.read_register(self.cmd_reg_off);
         rv.write_register(self.cmd_reg_off, 0);
         match cmd {

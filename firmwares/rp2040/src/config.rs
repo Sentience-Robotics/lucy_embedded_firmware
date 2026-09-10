@@ -57,6 +57,52 @@ pub struct Robot {
     pub servo6: PwmServoModbusAdapter<180, Servo12>,
 }
 
+impl Robot {
+    pub fn tick(&mut self, rt: &RegisterTable) {
+        let rv = RegisterView {
+            table: rt,
+            base_register: self.servo1.get_base_register(),
+            nb_register: self.servo1.get_nb_register(),
+        };
+        self.servo1.tick(&rv);
+
+        let rv = RegisterView {
+            table: rt,
+            base_register: self.servo2.get_base_register(),
+            nb_register: self.servo2.get_nb_register(),
+        };
+        self.servo2.tick(&rv);
+
+        let rv = RegisterView {
+            table: rt,
+            base_register: self.servo3.get_base_register(),
+            nb_register: self.servo3.get_nb_register(),
+        };
+        self.servo3.tick(&rv);
+
+        let rv = RegisterView {
+            table: rt,
+            base_register: self.servo4.get_base_register(),
+            nb_register: self.servo4.get_nb_register(),
+        };
+        self.servo4.tick(&rv);
+
+        let rv = RegisterView {
+            table: rt,
+            base_register: self.servo5.get_base_register(),
+            nb_register: self.servo5.get_nb_register(),
+        };
+        self.servo5.tick(&rv);
+
+        let rv = RegisterView {
+            table: rt,
+            base_register: self.servo6.get_base_register(),
+            nb_register: self.servo6.get_nb_register(),
+        };
+        self.servo6.tick(&rv);
+    }
+}
+
 pub fn config(
     rt: &mut RegisterTable, slices: Slices,
     gpio6: Gpio6, gpio7: Gpio7, gpio8: Gpio8, gpio9: Gpio9, gpio10: Gpio10, gpio11: Gpio11,
@@ -92,11 +138,6 @@ pub fn config(
         angle_reg_off: 1,
         driver: driver
     };
-    let mut rv1 = RegisterView {
-        table: &rt,
-        base_register: 0x00,
-        nb_register: 2
-    };
 
     // SERVO 2
     let mut channel_pwm2 = Rp2040PwmChannel {
@@ -122,11 +163,6 @@ pub fn config(
         angle_reg_off: 1,
         driver: driver2
     };
-    let mut rv2 = RegisterView {
-        table: &rt,
-        base_register: 0x02,
-        nb_register: 0
-    };
 
     // SERVO 3
     let mut pwm = slices.pwm4;
@@ -139,7 +175,7 @@ pub fn config(
         channel: pwm.channel_a,
     };
 
-    let mut driver_config = PwmServoConfig {
+    let driver_config = PwmServoConfig {
         min_pulse: 600,
         max_pulse: 2500,
         min_angle: 0,
@@ -147,7 +183,7 @@ pub fn config(
         default_angle: 90
     };
 
-    let mut driver3 = PwmServoDriver {
+    let driver = PwmServoDriver {
         config: driver_config,
         channel: channel_pwm
     };
@@ -156,12 +192,7 @@ pub fn config(
         base_register: 0x00,
         cmd_reg_off: 0,
         angle_reg_off: 1,
-        driver: driver3
-    };
-    let mut rv3 = RegisterView {
-        table: &rt,
-        base_register: 0x04,
-        nb_register: 2
+        driver: driver
     };
 
     // SERVO 4
@@ -169,7 +200,7 @@ pub fn config(
         channel: pwm.channel_b,
     };
 
-    let mut driver_config = PwmServoConfig {
+    let driver_config = PwmServoConfig {
         min_pulse: 600,
         max_pulse: 2500,
         min_angle: 0,
@@ -177,7 +208,7 @@ pub fn config(
         default_angle: 90
     };
 
-    let mut driver = PwmServoDriver {
+    let driver = PwmServoDriver {
         config: driver_config,
         channel: channel_pwm
     };
@@ -187,11 +218,6 @@ pub fn config(
         cmd_reg_off: 0,
         angle_reg_off: 1,
         driver: driver
-    };
-    let mut rv4 = RegisterView {
-        table: &rt,
-        base_register: 0x06,
-        nb_register: 2
     };
 
     // SERVO 5
@@ -205,7 +231,7 @@ pub fn config(
         channel: pwm.channel_a,
     };
 
-    let mut driver_config = PwmServoConfig {
+    let driver_config = PwmServoConfig {
         min_pulse: 600,
         max_pulse: 2500,
         min_angle: 0,
@@ -213,7 +239,7 @@ pub fn config(
         default_angle: 90
     };
 
-    let mut driver = PwmServoDriver {
+    let driver = PwmServoDriver {
         config: driver_config,
         channel: channel_pwm
     };
@@ -224,18 +250,13 @@ pub fn config(
         angle_reg_off: 1,
         driver: driver
     };
-    let mut rv5 = RegisterView {
-        table: &rt,
-        base_register: 0x08,
-        nb_register: 2
-    };
 
     // SERVO 6
     let mut channel_pwm = Rp2040PwmChannel {
         channel: pwm.channel_b,
     };
 
-    let mut driver_config = PwmServoConfig {
+    let driver_config = PwmServoConfig {
         min_pulse: 600,
         max_pulse: 2500,
         min_angle: 0,
@@ -243,7 +264,7 @@ pub fn config(
         default_angle: 90
     };
 
-    let mut driver = PwmServoDriver {
+    let driver = PwmServoDriver {
         config: driver_config,
         channel: channel_pwm
     };
@@ -253,11 +274,6 @@ pub fn config(
         cmd_reg_off: 0,
         angle_reg_off: 1,
         driver: driver
-    };
-    let mut rv6 = RegisterView {
-        table: &rt,
-        base_register: 0x0A,
-        nb_register: 2
     };
 
     Robot {

@@ -196,18 +196,21 @@ fn main() -> ! {
         channel: channel_uart
     };
 
+    // Operands first, opcode last: tick() clears cmd as soon as it sees it, so
+    // cmd must be the highest register of the block for the host's ascending
+    // register order to deliver id and angle before it fires.
     let mut adapter7 = BusServoModbusAdapter {
         base_register: 0x00,
-        cmd_reg_off: 0,
-        id_reg_off: 1,
-        angle_reg_off: 2,
+        id_reg_off: 0,
+        angle_reg_off: 1,
+        cmd_reg_off: 2,
         driver: &mut driver
     };
 
     let mut rv7 = RegisterView {
         table: &rt,
         base_register: 0x00,
-        nb_register: 2
+        nb_register: 3
     };
 
     /* USB */
@@ -304,7 +307,7 @@ fn main() -> ! {
             }
             rx_len = 0;
         }
-        robot.tick(&rt);
+        //robot.tick(&rt);
 
         adapter7.tick(&mut rv7);
     }

@@ -174,7 +174,7 @@ impl<'a, U: UartChannel> ModbusAdapter for BusServoModbusAdapter<'a, U> {
     }
 
     fn get_nb_register(&self) -> u16 {
-        2
+        3
     }
 
     fn get_base_register(&self) -> u16 {

@@ -245,7 +245,7 @@ fn main() {
     println!("Périphérique trouvé sur : {}", port_info.port_name);
 
     let mut port = serialport::new(&port_info.port_name, 115_200)
-        .timeout(Duration::from_millis(1000))
+        .timeout(Duration::from_millis(50))
         .open().unwrap();
 
     loop {
@@ -262,23 +262,39 @@ fn main() {
         rh.set_dirty(reg);
         println!("Done");*/
 
-        let mut changes:Vec<u16> = Vec::new();
-        //sem.wait();
+        // Snapshot value and clear the dirty bit under the semaphore, then send
+        // outside it. set_dirty/set_clean are read-modify-write on a byte shared
+        // by eight registers, so racing the writer drops flags and reorders a
+        // block; holding the lock across the sends would instead stall the
+        // 100 Hz control thread for 10 ms per register.
+        let mut changes: Vec<(u16, u16)> = Vec::new();
+        sem.wait();
         for (iterator, status) in rh.iter() {
             if status {
-                changes.push(iterator);
+                changes.push((iterator, rt.registers[iterator as usize].get()));
             }
         }
-        for register in changes {
-            println!("Register done on {} - {}", register, rt.registers[register as usize].get());
-            let packet = write_register(0x01, register, rt.registers[register as usize].get());
+        for (register, _) in &changes {
+            rh.set_clean(*register);
+        }
+        sem.post();
+
+        for (register, value) in changes {
+            println!("Register done on {} - {}", register, value);
+            let packet = write_register(0x01, register, value);
             let _ = port.write_all(&packet);
-            rh.set_clean(register);
             std::thread::sleep(Duration::from_millis(10));
         }
         {
-            let mut buf = [0; 0xff];
-            port.read(&mut buf);
+            // The firmware acknowledges every Modbus frame on USB CDC
+            // ("Request N received and processed", "CrcError", ...). Dropping
+            // that reply hides a firmware-side rejection behind a clean host log.
+            let mut buf = [0u8; 0xff];
+            if let Ok(n) = port.read(&mut buf) {
+                if n > 0 {
+                    print!("  <- firmware: {}", String::from_utf8_lossy(&buf[..n]));
+                }
+            }
             /*print!("Port:");
             for ch in buf {
                 print!("{:?}", ch as char)

@@ -34,6 +34,12 @@
             pkgs.elf2uf2-rs
             pkgs.picotool
           ];
+          nativeBuildInputs = [
+            pkgs.pkg-config
+          ];
+          buildInputs = [
+            pkgs.udev
+          ];
           shellHook = ''
             export LD_LIBRARY_PATH="${pkgs.udev}/lib:$LD_LIBRARY_PATH"
             echo -e ""

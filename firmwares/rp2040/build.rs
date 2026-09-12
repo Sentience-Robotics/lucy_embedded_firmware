@@ -17,4 +17,5 @@ fn main() {
 
     println!("cargo:rerun-if-changed=memory.x");
     println!("cargo:rerun-if-changed=build.rs");
+    //build_config(String::from("config.yaml"));
 }

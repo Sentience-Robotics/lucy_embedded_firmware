@@ -167,6 +167,9 @@ impl<'a, U: UartChannel> ModbusAdapter for BusServoModbusAdapter<'a, U> {
             4 => {
                 self.driver.enable_led(id, false);
             },
+            5 => {
+                self.driver.enable_torque(id, false);
+            },
             _ => {
 
             }

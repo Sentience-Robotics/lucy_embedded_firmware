@@ -196,22 +196,16 @@ fn main() -> ! {
         channel: channel_uart
     };
 
-    // Operands first, opcode last: tick() clears cmd as soon as it sees it, so
-    // cmd must be the highest register of the block for the host's ascending
-    // register order to deliver id and angle before it fires.
-    let mut adapter7 = BusServoModbusAdapter {
-        base_register: 0x00,
-        id_reg_off: 0,
-        angle_reg_off: 1,
-        cmd_reg_off: 2,
-        driver: &mut driver
-    };
-
-    let mut rv7 = RegisterView {
-        table: &rt,
-        base_register: 0x00,
-        nb_register: 3
-    };
+    // One register block per joint. A single shared block meant every joint
+    // wrote the same id/angle/cmd registers, so only whichever the host wrote
+    // last survived to be shipped: six joints moved, but a torque opcode sent
+    // to all of them only ever reached the last.
+    //
+    // A block whose cmd is 0 costs three register reads and no bus traffic, so
+    // this may exceed the joint count; it must never be below the highest
+    // virtual_pin the host assigns.
+    const BUS_SERVO_SLOTS: u16 = 8;
+    const BUS_SERVO_BLOCK: u16 = 3;
 
     /* USB */
 
@@ -309,6 +303,24 @@ fn main() -> ! {
         }
         //robot.tick(&rt);
 
-        adapter7.tick(&mut rv7);
+        // Operands first, opcode last: tick() clears cmd as soon as it sees it,
+        // so cmd must be the highest register of the block for the host's
+        // ascending register order to deliver id and angle before it fires.
+        for slot in 0..BUS_SERVO_SLOTS {
+            let base = slot * BUS_SERVO_BLOCK;
+            let rv = RegisterView {
+                table: &rt,
+                base_register: base,
+                nb_register: BUS_SERVO_BLOCK,
+            };
+            let mut adapter = BusServoModbusAdapter {
+                base_register: base,
+                id_reg_off: 0,
+                angle_reg_off: 1,
+                cmd_reg_off: 2,
+                driver: &mut driver,
+            };
+            adapter.tick(&rv);
+        }
     }
 }

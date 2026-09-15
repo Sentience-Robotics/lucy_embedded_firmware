@@ -35,6 +35,8 @@ mod channel;
 use channel::Rp2040PwmChannel;
 mod config;
 use config::{Robot, config};
+mod generated_config;
+use generated_config::{BUS_SERVO_BASE, BUS_SERVO_BLOCK, BUS_SERVO_SLOTS};
 
 use lucy_embedded_firmware_core::{
     pwm::{PwmChannel},
@@ -196,17 +198,6 @@ fn main() -> ! {
         channel: channel_uart
     };
 
-    // One register block per joint. A single shared block meant every joint
-    // wrote the same id/angle/cmd registers, so only whichever the host wrote
-    // last survived to be shipped: six joints moved, but a torque opcode sent
-    // to all of them only ever reached the last.
-    //
-    // A block whose cmd is 0 costs three register reads and no bus traffic, so
-    // this may exceed the joint count; it must never be below the highest
-    // virtual_pin the host assigns.
-    const BUS_SERVO_SLOTS: u16 = 8;
-    const BUS_SERVO_BLOCK: u16 = 3;
-
     /* USB */
 
     let usb_bus = UsbBusAllocator::new(rp2040_hal::usb::UsbBus::new(
@@ -307,7 +298,7 @@ fn main() -> ! {
         // so cmd must be the highest register of the block for the host's
         // ascending register order to deliver id and angle before it fires.
         for slot in 0..BUS_SERVO_SLOTS {
-            let base = slot * BUS_SERVO_BLOCK;
+            let base = BUS_SERVO_BASE + slot * BUS_SERVO_BLOCK;
             let rv = RegisterView {
                 table: &rt,
                 base_register: base,

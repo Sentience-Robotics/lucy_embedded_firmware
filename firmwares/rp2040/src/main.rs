@@ -2,82 +2,40 @@
 #![no_main]
 
 use core::fmt::Write;
-
-struct BufferWriter<'a> {
-    buf: &'a mut [u8],
-    offset: usize,
-}
-
-impl<'a> BufferWriter<'a> {
-    fn new(buf: &'a mut [u8]) -> Self {
-        Self { buf, offset: 0 }
-    }
-
-    fn as_bytes(&self) -> &[u8] {
-        &self.buf[..self.offset]
-    }
-}
-
-impl<'a> Write for BufferWriter<'a> {
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        let bytes = s.as_bytes();
-        let remaining = self.buf.len() - self.offset;
-        if bytes.len() > remaining {
-            return Err(core::fmt::Error);
-        }
-        self.buf[self.offset..self.offset + bytes.len()].copy_from_slice(bytes);
-        self.offset += bytes.len();
-        Ok(())
-    }
-}
-
-mod channel;
-use channel::Rp2040PwmChannel;
 mod config;
-use config::{Robot, config};
+mod channel;
+use config::config;
+
+use panic_halt as _;
+use cortex_m::peripheral::SCB;
+use cortex_m_rt::entry;
+
+use embedded_hal::{delay::DelayNs, digital::OutputPin, pwm::SetDutyCycle, i2c::I2c};
 
 use lucy_embedded_firmware_core::{
     pwm::{PwmChannel},
     uart::UartChannel,
-    drivers::{
-        pwm_servo::{PwmServoDriver, PwmServoConfig, PwmServoModbusAdapter},
-        bus_servo::{BusServoDriver, BusServoConfig, BusServoModbusAdapter},
-    },
+    drivers::{pwm_servo::{PwmServoDriver, PwmServoConfig, PwmServoModbusAdapter}, bus_servo::{BusServoDriver, BusServoConfig, BusServoModbusAdapter}},
     modbus::{ModbusError, ModbusAdapter, RegisterView, RegisterTable, Slave, parse_modbus_frame, route_modbus_request}
-};
-
-use embedded_hal::{
-    delay::DelayNs,
-    digital::OutputPin,
-    pwm::SetDutyCycle,
-    i2c::I2c,
 };
 
 use rp2040_hal::{
     uart::{Writer, Reader, UartDevice, ValidUartPinout},
     uart::{DataBits, StopBits, UartConfig, UartPeripheral, State},
-    pac,
-    fugit::RateExtU32,
-    fugit::MicrosDuration,
+    pac, pac::{PIO0}, fugit::{RateExtU32, MicrosDuration},
     clocks::init_clocks_and_plls,
-    gpio::{bank0, Pins, FunctionPio0, FunctionUart, FunctionPwm, FunctionI2C, PullUp, PullDown},
-    i2c::I2C,
-    pwm::{Slices, Pwm0, Pwm4, Slice, FreeRunning},
-    pio::PIOExt,
-    sio::Sio,
-    timer::Timer,
-    watchdog::Watchdog,
-    Clock
+    gpio::{bank0, Pins, Pin, FunctionPio0, FunctionUart, FunctionPwm, FunctionI2C, PullUp, PullDown},
+    i2c::I2C, pwm::{Slices, Pwm0, Pwm4, Slice, FreeRunning},
+    pio::{PIOExt, SM0},
+    sio::{Sio},
+    timer::{Timer, CountDown},
+    watchdog::Watchdog, Clock
 };
+
 use smart_leds::{SmartLedsWrite, RGB8};
 use ws2812_pio::Ws2812;
-
 use usb_device::{class_prelude::*, prelude::*};
 use usbd_serial::SerialPort;
-
-use cortex_m_rt::entry;
-use panic_halt as _;
-
 
 enum UartError {
 
@@ -112,14 +70,63 @@ where
     }
 }
 
+struct Init;
+struct Idle;
+struct Active;
+struct Error;
+
+struct Board<State> {
+    _state: core::marker::PhantomData<State>,
+    ws: Ws2812<PIO0, SM0, CountDown, Pin<bank0::Gpio18, FunctionPio0, PullDown>>,
+}
+
+impl Board<Init> {
+    pub fn new(mut ws: Ws2812<PIO0, SM0, CountDown, Pin<bank0::Gpio18, FunctionPio0, PullDown>>) -> Self {
+        let mut leds = [RGB8::default(); 3];
+        leds[0] = RGB8 { r: 100, g: 100, b: 0 };
+        ws.write(leds.iter().cloned());
+
+
+        Board { _state: core::marker::PhantomData, ws: ws}
+    }
+
+    pub fn initialize(self) -> Board<Idle> {
+        Board { _state: core::marker::PhantomData, ws: self.ws }
+    }
+}
+
+impl Board<Idle> {
+    pub fn tick(self) -> Board<Active> {
+        Board { _state: core::marker::PhantomData, ws: self.ws }
+    }
+}
+
+impl Board<Active> {
+    pub fn process(self) -> Result<Board<Idle>, Board<Error>> {
+        Ok(Board { _state: core::marker::PhantomData, ws: self.ws })
+    }
+
+}
+
+impl Board<Error> {
+    pub fn handle_error(self) -> Board<Idle> {
+        Board { _state: core::marker::PhantomData, ws: self.ws }
+    }
+
+    pub fn reset(self) -> ! {
+        SCB::sys_reset();
+    }
+}
+
+
 #[unsafe(link_section = ".boot2")]
 #[unsafe(no_mangle)]
 #[used]
 pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_GENERIC_03H;
 
-
 #[entry]
 fn main() -> ! {
+
     let core = cortex_m::Peripherals::take().unwrap();
     let mut pac = pac::Peripherals::take().unwrap();
     let mut watchdog = Watchdog::new(pac.WATCHDOG);
@@ -152,10 +159,8 @@ fn main() -> ! {
         clocks.peripheral_clock.freq(),
         timer.count_down(),
     );
-    let mut leds = [RGB8::default(); 3];
 
-    leds[0] = RGB8 { r: 100, g: 0, b: 0 };
-    ws.write(leds.iter().cloned()).unwrap();
+    let board = Board::<Init>::new(ws);
 
     let mut rt = RegisterTable::default();
 
@@ -241,22 +246,18 @@ fn main() -> ! {
     let mut rx_active_timer = false;
     let mut last_rx_micros: u64 = 0;
 
-    leds[1] = RGB8 { r: 0, g: 10, b: 0 };
-    ws.write(leds.iter().cloned()).unwrap();
-
-    let mut angle = 0_u16;
     loop {
         let now = timer.get_counter().ticks();
 
         if usb_dev.poll(&mut [&mut serial]) {
-            let mut tmp_buf = [0u8; 64];
+            let mut read_buf = [0u8; 64];
 
-            while let Ok(count) = serial.read(&mut tmp_buf) {
+            while let Ok(count) = serial.read(&mut read_buf) {
                 if count == 0 {
                     break;
                 }
                 if rx_len + count <= rx_buf.len() {
-                    rx_buf[rx_len..rx_len + count].copy_from_slice(&tmp_buf[..count]);
+                    rx_buf[rx_len..rx_len + count].copy_from_slice(&read_buf[..count]);
                     rx_len += count;
                     last_rx_micros = now;
                     rx_active_timer = true;
@@ -274,38 +275,25 @@ fn main() -> ! {
                 match raw_request {
                     Ok(request) => {
                         let tmp = route_modbus_request(&rt, request).unwrap_or(0);
-
-                        let mut raw_buf = [0u8; 64];
-                        let mut writer = BufferWriter::new(&mut raw_buf);
-                        let _ = write!(writer, "Request {} received and processed\n", tmp as u16);
-
-                        serial.write(writer.as_bytes());
                     }
                     Err(error) => match error {
                         ModbusError::InvalidAddress => {
-                            serial.write(b"InvalidAddress\n");
                         }
                         ModbusError::InvalidFrame => {
-                            serial.write(b"InvalidFrame\n");
                         }
                         ModbusError::CrcError => {
-                            serial.write(b"CrcError\n");
                         }
                         ModbusError::UnknownOpcode => {
-                            serial.write(b"UnknownOpcode\n");
                         }
                         _ => {
-                            serial.write(b"Error\n");
                         }
                     }
                 }
-            } else {
-                serial.write(b"Skipping");
             }
             rx_len = 0;
         }
         robot.tick(&rt);
 
-        adapter7.tick(&mut rv7);
+        //adapter7.tick(&mut rv7);
     }
 }

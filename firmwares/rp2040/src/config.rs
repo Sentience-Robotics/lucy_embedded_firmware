@@ -7,7 +7,7 @@ use rp2040_hal::{
     clocks::init_clocks_and_plls,
     gpio::{bank0, Pin, Pins, FunctionPio0, FunctionUart, FunctionPwm, FunctionI2C, FunctionNull, PullUp, PullDown},
     i2c::I2C,
-    pwm::{Slices, A, B, Pwm0, Pwm3, Pwm4, Pwm5, Pwm6, Slice, FreeRunning, Channel},
+    pwm::{Slices, A, B, Pwm0, Pwm1, Pwm2, Pwm3, Pwm4, Pwm5, Pwm6, Pwm7, Slice, FreeRunning, Channel},
     pio::PIOExt,
     sio::Sio,
     timer::Timer,
@@ -41,15 +41,27 @@ type Gpio9 = Pin<bank0::Gpio9, FunctionNull, PullDown>;
 type Gpio10 = Pin<bank0::Gpio10, FunctionNull, PullDown>;
 type Gpio11 = Pin<bank0::Gpio11, FunctionNull, PullDown>;
 
+type Servo1 = Rp2040PwmChannel<Channel<Slice<Pwm0, FreeRunning>, A>>;
+type Servo2 = Rp2040PwmChannel<Channel<Slice<Pwm0, FreeRunning>, B>>;
+type Servo3 = Rp2040PwmChannel<Channel<Slice<Pwm1, FreeRunning>, A>>;
+type Servo4 = Rp2040PwmChannel<Channel<Slice<Pwm1, FreeRunning>, B>>;
+type Servo5 = Rp2040PwmChannel<Channel<Slice<Pwm2, FreeRunning>, A>>;
+type Servo6 = Rp2040PwmChannel<Channel<Slice<Pwm2, FreeRunning>, B>>;
 type Servo7 = Rp2040PwmChannel<Channel<Slice<Pwm3, FreeRunning>, A>>;
 type Servo8 = Rp2040PwmChannel<Channel<Slice<Pwm3, FreeRunning>, B>>;
 type Servo9 = Rp2040PwmChannel<Channel<Slice<Pwm4, FreeRunning>, A>>;
 type Servo10 = Rp2040PwmChannel<Channel<Slice<Pwm4, FreeRunning>, B>>;
 type Servo11 = Rp2040PwmChannel<Channel<Slice<Pwm5, FreeRunning>, A>>;
 type Servo12 = Rp2040PwmChannel<Channel<Slice<Pwm5, FreeRunning>, B>>;
+type Servo13 = Rp2040PwmChannel<Channel<Slice<Pwm6, FreeRunning>, A>>;
+type Servo14 = Rp2040PwmChannel<Channel<Slice<Pwm6, FreeRunning>, B>>;
+type Servo15 = Rp2040PwmChannel<Channel<Slice<Pwm7, FreeRunning>, A>>;
+type Servo16 = Rp2040PwmChannel<Channel<Slice<Pwm7, FreeRunning>, B>>;
+type Servo17 = Rp2040PwmChannel<Channel<Slice<Pwm0, FreeRunning>, A>>;
+type Servo18 = Rp2040PwmChannel<Channel<Slice<Pwm0, FreeRunning>, B>>;
 
 pub struct Robot {
-    pub servo1: PwmServoModbusAdapter<180, Servo7>,
+    pub servo1: PwmServoModbusAdapter<300, Servo7>,
     pub servo2: PwmServoModbusAdapter<180, Servo8>, 
     pub servo3: PwmServoModbusAdapter<180, Servo9>, 
     pub servo4: PwmServoModbusAdapter<180, Servo10>, 
@@ -115,11 +127,11 @@ pub fn config(
     pwm.channel_b.output_to(gpio7);
     pwm.enable();
 
-    let mut channel_pwm = Rp2040PwmChannel {
+    let channel_pwm = Rp2040PwmChannel {
         channel: pwm.channel_a,
     };
 
-    let mut driver_config = PwmServoConfig {
+    let driver_config = PwmServoConfig {
         min_pulse: 500,
         max_pulse: 2500,
         min_angle: 0,
@@ -132,7 +144,7 @@ pub fn config(
         channel: channel_pwm
     };
 
-    let mut adapter1 = PwmServoModbusAdapter {
+    let adapter1 = PwmServoModbusAdapter {
         base_register: 0x00,
         cmd_reg_off: 0,
         angle_reg_off: 1,
@@ -140,11 +152,11 @@ pub fn config(
     };
 
     // SERVO 2
-    let mut channel_pwm2 = Rp2040PwmChannel {
+    let channel_pwm2 = Rp2040PwmChannel {
         channel: pwm.channel_b,
     };
 
-    let mut driver_config2 = PwmServoConfig {
+    let driver_config2 = PwmServoConfig {
         min_pulse: 1000,
         max_pulse: 2000,
         min_angle: 0,
@@ -157,8 +169,8 @@ pub fn config(
         channel: channel_pwm2
     };
 
-    let mut adapter2 = PwmServoModbusAdapter {
-        base_register: 0x00,
+    let adapter2 = PwmServoModbusAdapter {
+        base_register: 0x02,
         cmd_reg_off: 0,
         angle_reg_off: 1,
         driver: driver2
@@ -171,7 +183,7 @@ pub fn config(
     pwm.channel_a.output_to(gpio8);
     pwm.channel_b.output_to(gpio9);
     pwm.enable();
-    let mut channel_pwm = Rp2040PwmChannel {
+    let channel_pwm = Rp2040PwmChannel {
         channel: pwm.channel_a,
     };
 
@@ -188,15 +200,15 @@ pub fn config(
         channel: channel_pwm
     };
 
-    let mut adapter3 = PwmServoModbusAdapter {
-        base_register: 0x00,
+    let adapter3 = PwmServoModbusAdapter {
+        base_register: 0x04,
         cmd_reg_off: 0,
         angle_reg_off: 1,
         driver: driver
     };
 
     // SERVO 4
-      let mut channel_pwm = Rp2040PwmChannel {
+      let channel_pwm = Rp2040PwmChannel {
         channel: pwm.channel_b,
     };
 
@@ -213,8 +225,8 @@ pub fn config(
         channel: channel_pwm
     };
 
-    let mut adapter4 = PwmServoModbusAdapter {
-        base_register: 0x00,
+    let adapter4 = PwmServoModbusAdapter {
+        base_register: 0x06,
         cmd_reg_off: 0,
         angle_reg_off: 1,
         driver: driver
@@ -227,7 +239,7 @@ pub fn config(
     pwm.channel_a.output_to(gpio10);
     pwm.channel_b.output_to(gpio11);
     pwm.enable();
-    let mut channel_pwm = Rp2040PwmChannel {
+    let channel_pwm = Rp2040PwmChannel {
         channel: pwm.channel_a,
     };
 
@@ -244,15 +256,15 @@ pub fn config(
         channel: channel_pwm
     };
 
-    let mut adapter5 = PwmServoModbusAdapter {
-        base_register: 0x00,
+    let adapter5 = PwmServoModbusAdapter {
+        base_register: 0x08,
         cmd_reg_off: 0,
         angle_reg_off: 1,
         driver: driver
     };
 
     // SERVO 6
-    let mut channel_pwm = Rp2040PwmChannel {
+    let channel_pwm = Rp2040PwmChannel {
         channel: pwm.channel_b,
     };
 
@@ -269,8 +281,8 @@ pub fn config(
         channel: channel_pwm
     };
 
-    let mut adapter6 = PwmServoModbusAdapter {
-        base_register: 0x00,
+    let adapter6 = PwmServoModbusAdapter {
+        base_register: 0x0a,
         cmd_reg_off: 0,
         angle_reg_off: 1,
         driver: driver

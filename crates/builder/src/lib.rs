@@ -9,7 +9,7 @@ use quote::{format_ident, quote};
 use lucy_embedded_firmware_core::drivers::pwm_servo;
 
 pub fn build_config(config_path: String) {
-    println!("cargo:warning=BUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIILDING");
+    println!("cargo:warning=Building...");
     println!("cargo:rerun-if-changed=config.yaml");
 
     let out_dir = env::var("OUT_DIR").unwrap();

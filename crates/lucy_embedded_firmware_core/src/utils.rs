@@ -7,7 +7,7 @@ pub fn map_range(val: f32, in_min: f32, in_max: f32, out_min: f32, out_max: f32)
 
     let result = out_min + (val - in_min) * (out_max - out_min) / in_span;
 
-    // Garantie que la sortie ne dépasse jamais les limites physiques du servo
+    // Output never exceeds the physical limits of the servo
     let (min_bound, max_bound) = if out_min <= out_max {
         (out_min, out_max)
     } else {

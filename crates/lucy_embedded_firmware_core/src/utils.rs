@@ -1,6 +1,6 @@
 pub fn map_range(val: f32, in_min: f32, in_max: f32, out_min: f32, out_max: f32) -> f32 {
     let in_span = in_max - in_min;
-    
+
     if in_span.abs() < f32::EPSILON {
         return out_min;
     }

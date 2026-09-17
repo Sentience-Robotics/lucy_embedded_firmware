@@ -1,5 +1,6 @@
 use crate::{pwm::PwmChannel};
 use crate::{modbus::RegisterView, modbus::ModbusAdapter, utils::map_range};
+use core::f32::consts::PI;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -12,15 +13,30 @@ pub struct PwmServoConfig {
     pub default_angle: u16
 }
 
-pub struct PwmServoDriver<C> {
+type PwmServo90Driver<C> = PwmServoDriver<90, C>;
+type PwmServo180Driver<C> = PwmServoDriver<180, C>;
+type PwmServo270Driver<C> = PwmServoDriver<270, C>;
+type PwmServo360Driver<C> = PwmServoDriver<360, C>;
+
+pub struct PwmServoDriver<const A: u16, C> {
     pub config: PwmServoConfig,
     pub channel: C,
 }
 
-impl<C: PwmChannel> PwmServoDriver<C> {
-    pub fn move_angle(&mut self, angle: u16) {
-        let angle = angle.clamp(self.config.min_angle, self.config.max_angle);
-        let pulse = map_range(angle as f32, self.config.min_angle as f32, self.config.max_angle as f32, self.config.min_pulse as f32, self.config.max_pulse as f32) as u16;
+impl<const A: u16, C: PwmChannel> PwmServoDriver<A, C> {
+    pub const AMPLITUDE: u16 = A;
+
+    pub fn move_angle(&mut self, angle_rad: u16) {
+        let angle_deg = (angle_rad as f32 / 1000.0).to_degrees();
+        let clamped_deg = angle_deg.clamp(self.config.min_angle as f32, self.config.max_angle as f32);
+        let pulse = (map_range(
+            clamped_deg,
+            0f32,
+            Self::AMPLITUDE as f32,
+            self.config.min_pulse as f32,
+            self.config.max_pulse as f32,
+        ) + 0.5) as u16;
+
         self.channel.set_pwm(pulse);
     }
 
@@ -31,15 +47,15 @@ impl<C: PwmChannel> PwmServoDriver<C> {
 
 
 
-pub struct PwmServoModbusAdapter<'a, C> {
+pub struct PwmServoModbusAdapter<const A: u16, C> {
     pub base_register: u16,
     pub cmd_reg_off: u16,
     pub angle_reg_off: u16,
-    pub driver: &'a mut PwmServoDriver<C>,
+    pub driver: PwmServoDriver<A, C>,
 }
 
-impl<'a, C: PwmChannel> ModbusAdapter for PwmServoModbusAdapter<'a, C> {
-    fn tick(&mut self, rv: &mut RegisterView) {
+impl<const A: u16, C: PwmChannel> ModbusAdapter for PwmServoModbusAdapter<A, C> {
+    fn tick(&mut self, rv: &RegisterView) {
         let cmd = rv.read_register(self.cmd_reg_off);
         rv.write_register(self.cmd_reg_off, 0);
         match cmd {

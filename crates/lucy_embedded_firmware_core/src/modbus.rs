@@ -22,9 +22,18 @@ pub enum ModbusError {
 }
 
 pub trait ModbusAdapter {
-    fn tick(&mut self, rv: &mut RegisterView);
+    fn tick(&mut self, rv: &RegisterView);
     fn get_nb_register(&self) -> u16;
     fn get_base_register(&self) -> u16;
+}
+
+pub struct ModbusRedirect {
+    pub source: u16,
+    pub destination: u16,
+}
+
+impl ModbusRedirect {
+
 }
 
 /* WIP */
@@ -100,7 +109,7 @@ impl<'a> RegisterView<'a> {
         }
     }
 
-    pub fn write_register(&mut self, index: u16, value: u16) {
+    pub fn write_register(&self, index: u16, value: u16) {
         if index > self.nb_register {
             return;
         }
@@ -147,15 +156,15 @@ pub fn parse_modbus_frame<'a>(slave: &'a Slave, frame: &'a[u8]) -> Result<Reques
     }
 }
 
-pub fn route_modbus_request(register_table: &RegisterTable, request: Request<'_>) -> Result<(), ModbusError> {
+pub fn route_modbus_request(register_table: &RegisterTable, request: Request<'_>) -> Result<usize, ModbusError> {
     match request {
         Request::ReadHoldingRegisters(addr, quantity) => {
             let registers = &register_table.registers[addr as usize..(addr + quantity) as usize];
-            Ok(())
+            Ok(0)
         },
         Request::WriteSingleRegister(addr, value) => {
             register_table.registers[addr as usize].set(value);
-            Ok(())
+            Ok(value as usize)
         },
         Request::WriteMultipleRegisters(addr, data) => {
             let end_addr = addr as usize + data.len();
@@ -167,7 +176,7 @@ pub fn route_modbus_request(register_table: &RegisterTable, request: Request<'_>
                     register_table.registers[addr as usize + i].set(value);
                 }
             }
-            Ok(())
+            Ok(0)
         },
         _ => {
             Err(ModbusError::UnknownOpcode)

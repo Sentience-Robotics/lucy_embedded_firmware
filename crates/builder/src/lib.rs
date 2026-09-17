@@ -40,7 +40,6 @@ pub fn build_config(config_path: String) {
             }
         }).collect();
 
-        //let (driver_name, driver_type) = to_idents(actuator["driver"].as_str().unwrap());
         let (adapter_name, adapter_type) = to_idents(actuator["modbus"]["adapter"].as_str().unwrap());
         let expanded = quote! {
             pub struct ModbusVariables {

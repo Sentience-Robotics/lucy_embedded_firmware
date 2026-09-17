@@ -1,7 +1,7 @@
-use crate::driver_generic::{ModBusDriver, ModBusDriverError};
 use crate::modbus::{*};
 use core::result::Result;
 use core::error::Error;
+use embedded_hal::*;
 
 #[derive(Debug)]
 pub enum ServoHubDriverError {
@@ -13,16 +13,15 @@ pub struct PCA9685Driver {
     channel: PCA9685PWMChannel,
 }
 
-impl ModBusDriver for PCA9685Driver {
-    fn tick(&mut self, view: RegisterView) -> Result<(), ModBusDriverError> {
-        Ok(())
+impl ModbusAdapter for PCA9685Driver {
+    fn tick(&mut self, view: &mut RegisterView)  {
     }
 
-    fn getNbRegisters() -> u16 {
+    fn get_nb_register(&self) -> u16 {
         1
     }
 
-    fn getBaseRegister(&mut self) ->  u16 {
+    fn get_base_register(&self) ->  u16 {
         self.base_reg
     }
 }

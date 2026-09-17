@@ -18,14 +18,14 @@ pub struct PwmServoDriver<C> {
 }
 
 impl<C: PwmChannel> PwmServoDriver<C> {
-    pub fn move_angle(&mut self, angle: u16) {
+    pub fn move_to_angle(&mut self, angle: u16) {
         let angle = angle.clamp(self.config.min_angle, self.config.max_angle);
         let pulse = map_range(angle as f32, self.config.min_angle as f32, self.config.max_angle as f32, self.config.min_pulse as f32, self.config.max_pulse as f32) as u16;
         self.channel.set_pwm(pulse);
     }
 
     pub fn reset_angle(&mut self) {
-        self.move_angle(self.config.default_angle);
+        self.move_to_angle(self.config.default_angle);
     }
 }
 
@@ -45,7 +45,7 @@ impl<'a, C: PwmChannel> ModbusAdapter for PwmServoModbusAdapter<'a, C> {
         match cmd {
             1 => {
                 let angle = rv.read_register(self.angle_reg_off);
-                self.driver.move_angle(angle);
+                self.driver.move_to_angle(angle);
             },
             2 => {
                 self.driver.reset_angle();

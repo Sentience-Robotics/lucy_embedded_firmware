@@ -1,9 +1,8 @@
-use crate::driver_generic::{ModBusDriver, ModBusDriverError};
-use crate::modbus::{RegisterView};
+use crate::modbus::{RegisterView, ModbusAdapter};
 use core::result::Result;
 use core::error::Error;
+use embedded_hal::*;
 
-#[derive(Debug)]
 pub enum PressureSensorDriverError {
     Error
 }
@@ -22,18 +21,21 @@ impl PressureSensorModBusAdapter {
     }
 }
 
-impl ModBusDriver for PressureSensorModBusAdapter {
-    fn tick(&mut self, view: RegisterView) -> Result<(), ModBusDriverError> {
+impl ModbusAdapter for PressureSensorModBusAdapter {
+    fn tick(&mut self, view: &mut RegisterView) {
         let command: u16 = view.read_register(self.cmd_reg_off);
+        if command == 1 {
 
-        Ok(())
+        }
     }
 
-    fn getNbRegisters() -> u16 {
+
+
+    fn get_nb_register(&self) -> u16 {
         3
     }
 
-    fn getBaseRegister(&mut self) ->  u16 {
+    fn get_base_register(&self) ->  u16 {
         self.base_reg
     }
 }

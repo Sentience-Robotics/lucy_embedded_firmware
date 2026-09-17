@@ -292,11 +292,7 @@ fn main() -> ! {
             }
             rx_len = 0;
         }
-        //robot.tick(&rt);
 
-        // Operands first, opcode last: tick() clears cmd as soon as it sees it,
-        // so cmd must be the highest register of the block for the host's
-        // ascending register order to deliver id and angle before it fires.
         for slot in 0..BUS_SERVO_SLOTS {
             let base = BUS_SERVO_BASE + slot * BUS_SERVO_BLOCK;
             let rv = RegisterView {

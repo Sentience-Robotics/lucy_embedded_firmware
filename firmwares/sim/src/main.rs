@@ -36,7 +36,7 @@ impl RegisterTable {
     const fn new() -> Self {
         Self {
             registers: [const { Cell::new(0) }; 0xFF],
-        } 
+        }
     }
 }
 
@@ -249,24 +249,6 @@ fn main() {
         .open().unwrap();
 
     loop {
-        /*let mut input = String::new();
-        std::io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
-        let input = input.trim();
-
-        let vec: Vec<_> = input.split(',').collect();
-        let reg = vec[0].parse::<u16>().unwrap();
-        let value = vec[1].parse::<u16>().unwrap();
-        rt.registers[reg as usize].set(value);
-        rh.set_dirty(reg);
-        println!("Done");*/
-
-        // Snapshot value and clear the dirty bit under the semaphore, then send
-        // outside it. set_dirty/set_clean are read-modify-write on a byte shared
-        // by eight registers, so racing the writer drops flags and reorders a
-        // block; holding the lock across the sends would instead stall the
-        // 100 Hz control thread for 10 ms per register.
         let mut changes: Vec<(u16, u16)> = Vec::new();
         sem.wait();
         for (iterator, status) in rh.iter() {
@@ -286,22 +268,12 @@ fn main() {
             std::thread::sleep(Duration::from_millis(10));
         }
         {
-            // The firmware acknowledges every Modbus frame on USB CDC
-            // ("Request N received and processed", "CrcError", ...). Dropping
-            // that reply hides a firmware-side rejection behind a clean host log.
             let mut buf = [0u8; 0xff];
             if let Ok(n) = port.read(&mut buf) {
                 if n > 0 {
                     print!("  <- firmware: {}", String::from_utf8_lossy(&buf[..n]));
                 }
             }
-            /*print!("Port:");
-            for ch in buf {
-                print!("{:?}", ch as char)
-            }
-            println!("");*/
-
         }
-        //sem.post();
     }
 }

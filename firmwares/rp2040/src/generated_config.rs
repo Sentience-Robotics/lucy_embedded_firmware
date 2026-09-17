@@ -5,7 +5,4 @@ pub const BUS_SERVO_BLOCK: u16 = 3;
 
 pub const BUS_SERVO_BASE: u16 = 0;
 
-/// Slots scanned each loop. Must cover the highest `virtual_pin` the host
-/// assigns, and must not reach registers owned by PWM servos or sensors: a bus
-/// adapter would read those as opcodes.
 pub const BUS_SERVO_SLOTS: u16 = 6;

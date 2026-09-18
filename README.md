@@ -1,1 +1,70 @@
-# lucy_embedded_firmware
+# Lucy Embedded Firmware
+
+Rust firmware for Lucy RP2040 boards using **Modbus RTU over USB CDC**.
+
+## Quick start (Pixi)
+
+From the `lucy_ws` root — **no sudo, no manual rustup/PATH config**:
+
+```bash
+pixi run firmware-setup   # once (or whenever the Pixi env is recreated)
+pixi run firmware-build
+pixi run firmware-test
+pixi run firmware-flash
+```
+
+`firmware-build` / `firmware-test` / `firmware-flash` already depend on
+`firmware-setup`, so a single `pixi run firmware-build` is enough after clone.
+
+Toolchain files live inside the Pixi env (`$CONDA_PREFIX/cargo` +
+`$CONDA_PREFIX/rustup`), activated automatically via
+`scripts/firmware_cargo_env.sh` (`.bat` on Windows).
+
+## Layout
+
+| Path | Role |
+|------|------|
+| `crates/lucy_embedded_firmware_core` | `no_std` Modbus + drivers + `BoardLayout` |
+| `crates/builder` | YAML → `$OUT_DIR/config.rs` codegen (auto virtual pins) |
+| `firmwares/rp2040_internal_pwm` | On-board PWM (`Servo1..16` → GPIO6..21) |
+| `firmwares/rp2040_bus_servo` | UART bus-servo stub |
+| `firmwares/rp2040_i2c_pwm` | Internal PWM + I2C/PCA9685 stub |
+| `firmwares/sim` | Host-side Modbus client (dev) |
+
+## Config
+
+Place architecture-shaped `config.yaml` in the selected board crate (or let the
+Lucy config pipeline install `config_<board>.yaml`). `build.rs` calls
+`builder::build_config` when the file contains `actuators:`.
+
+Angles in YAML are **radians (float)**; codegen emits **milliradian `u16`**
+(`rad × 1000`, `+0.5` cast). `virtual_pin` is **not** authored in YAML — the
+builder assigns contiguous Modbus blocks from enabled actuators then sensors.
+
+## Register map (build-assigned)
+
+| Driver | Registers |
+|--------|-----------|
+| PwmServo | 2 — cmd, angle (millirad) |
+| BusServo | 3 — id, angle, cmd |
+| PressureSensor | 2 — cmd, value |
+
+## Board class → crate
+
+| `board_class` | Crate package |
+|---------------|---------------|
+| `internal_servo_only` | `lucy_embedded_firmware_rp2040_internal_pwm` |
+| `bus_servo_only` | `lucy_embedded_firmware_rp2040_bus_servo` |
+| `internal_servo_i2c_pwm` | `lucy_embedded_firmware_rp2040_i2c_pwm` |
+
+## PWM notes
+
+Milliradian→pulse maps within `min_angle`..`max_angle` (millirad) into duty
+counts. Unit tests cover midpoints and half-step rounding (`no_std`, no
+`f32::round`).
+
+## Troubleshooting
+
+- `cargo not found` → `pixi run firmware-setup`
+- Linux serial permission → `sudo usermod -aG dialout $USER` then re-login
+- Flash verify fails → check USB cable / BOOTSEL / Modbus slave address

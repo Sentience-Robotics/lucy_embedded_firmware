@@ -7,8 +7,8 @@ build-rp2040:
     cd firmwares/rp2040 && cargo build --release --target thumbv6m-none-eabi
 
 # Flash AVR
-#flash-avr: build-avr
-#    ravedude uno -cb 115200 target/avr-atmega2560/release/firmware-arduino-mega.elf
+flash-arduino-mega: build-arduino-mega
+    cd firmwares/arduino_mega && cargo run
 
 # Flash RP2040
 #flash-rp2040: build-rp2040

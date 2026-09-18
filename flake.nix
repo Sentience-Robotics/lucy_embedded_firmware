@@ -22,7 +22,7 @@
             # directory (nightly for AVR/build-std, stable for RP2040).
             pkgs.rustup
 
-            rustToolchain
+            # rustToolchain
             pkgs.udev
             pkgs.systemd
             pkgs.flip-link

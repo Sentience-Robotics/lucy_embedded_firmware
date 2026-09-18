@@ -23,12 +23,6 @@ pub struct PwmServoDriver<const A: u16, C> {
     pub channel: C,
 }
 
-<<<<<<< HEAD
-impl<C: PwmChannel> PwmServoDriver<C> {
-    pub fn move_to_angle(&mut self, angle: u16) {
-        let angle = angle.clamp(self.config.min_angle, self.config.max_angle);
-        let pulse = map_range(angle as f32, self.config.min_angle as f32, self.config.max_angle as f32, self.config.min_pulse as f32, self.config.max_pulse as f32) as u16;
-=======
 impl<const A: u16, C: PwmChannel> PwmServoDriver<A, C> {
     pub const AMPLITUDE: u16 = A;
 
@@ -43,7 +37,6 @@ impl<const A: u16, C: PwmChannel> PwmServoDriver<A, C> {
             self.config.max_pulse as f32,
         ) + 0.5) as u16;
 
->>>>>>> dev
         self.channel.set_pwm(pulse);
     }
 

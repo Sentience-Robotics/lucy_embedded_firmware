@@ -44,6 +44,12 @@
             pkgs.just
 
           ];
+          nativeBuildInputs = [
+            pkgs.pkg-config
+          ];
+          buildInputs = [
+            pkgs.udev
+          ];
           shellHook = ''
             export LD_LIBRARY_PATH="${pkgs.udev}/lib:$LD_LIBRARY_PATH"
             echo -e ""

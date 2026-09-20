@@ -5,14 +5,14 @@ slave_address: 1
 serial_id: "E6617C93E3858429"
 firmware_crate: firmwares/rp2040_internal_pwm
 actuators:
-  - id: left_pinky
+  - id: left_thumb
     enabled: true
     virtual_pin: 0
     urdf:
-      joint: i01.leftHand.pinky_link_joint
+      joint: i01.leftHand.thumb_link_joint
     config:
       min_angle: 0.0
-      max_angle: 5.235987755982989
+      max_angle: 3.14159
       default_angle: 0.0
       min_pulse: 1250
       max_pulse: 2500
@@ -20,5 +20,65 @@ actuators:
       board: rp2040
       driver: PwmServoDriver
       channel: Servo1
+  - id: left_majeure
+    enabled: true
+    virtual_pin: 2
+    urdf:
+      joint: i01.leftHand.majeure_link_joint
+    config:
+      min_angle: 0.0
+      max_angle: 3.14159
+      default_angle: 0.0
+      min_pulse: 1250
+      max_pulse: 2500
+    hardware:
+      board: rp2040
+      driver: PwmServoDriver
+      channel: Servo3
+  - id: left_ring
+    enabled: true
+    virtual_pin: 3
+    urdf:
+      joint: i01.leftHand.ringFinger_link_joint
+    config:
+      min_angle: 0.0
+      max_angle: 3.14159
+      default_angle: 0.0
+      min_pulse: 1250
+      max_pulse: 2500
+    hardware:
+      board: rp2040
+      driver: PwmServoDriver
+      channel: Servo4
+  - id: left_pinky
+    enabled: true
+    virtual_pin: 4
+    urdf:
+      joint: i01.leftHand.pinky_link_joint
+    config:
+      min_angle: 0.0
+      max_angle: 3.141592653589793
+      default_angle: 0.0
+      min_pulse: 1250
+      max_pulse: 2500
+    hardware:
+      board: rp2040
+      driver: PwmServoDriver
+      channel: Servo5
+  - id: left_wrist_z
+    enabled: true
+    virtual_pin: 5
+    urdf:
+      joint: left_wrist_z_link_joint
+    config:
+      min_angle: 0.0
+      max_angle: 5.23599
+      default_angle: 0.0
+      min_pulse: 1250
+      max_pulse: 2500
+    hardware:
+      board: rp2040
+      driver: PwmServoDriver
+      channel: Servo6
 sensors:
   []

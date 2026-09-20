@@ -2,10 +2,12 @@ board_id: rp2040_so_arm
 board: rp2040
 board_class: bus_servo_only
 slave_address: 1
+serial_id: ""
 firmware_crate: firmwares/rp2040_bus_servo
 actuators:
   - id: rotation
     enabled: true
+    virtual_pin: 0
     urdf:
       joint: Rotation
     config:
@@ -20,6 +22,7 @@ actuators:
       channel: UART0:1
   - id: pitch
     enabled: true
+    virtual_pin: 1
     urdf:
       joint: Pitch
     config:
@@ -34,6 +37,7 @@ actuators:
       channel: UART0:2
   - id: elbow
     enabled: true
+    virtual_pin: 2
     urdf:
       joint: Elbow
     config:
@@ -48,6 +52,7 @@ actuators:
       channel: UART0:3
   - id: wrist_pitch
     enabled: true
+    virtual_pin: 3
     urdf:
       joint: Wrist_Pitch
     config:
@@ -62,6 +67,7 @@ actuators:
       channel: UART0:4
   - id: wrist_roll
     enabled: true
+    virtual_pin: 4
     urdf:
       joint: Wrist_Roll
     config:
@@ -76,6 +82,7 @@ actuators:
       channel: UART0:5
   - id: jaw
     enabled: true
+    virtual_pin: 5
     urdf:
       joint: Jaw
     config:

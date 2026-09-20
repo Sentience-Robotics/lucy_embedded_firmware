@@ -27,3 +27,4 @@ Cargo.lock
 #.idea/
 
 *.uf2
+config/

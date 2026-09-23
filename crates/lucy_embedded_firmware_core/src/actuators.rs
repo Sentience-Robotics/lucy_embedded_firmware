@@ -39,10 +39,17 @@ pub trait TorqueEnableInterface {
 
 // State
 
-pub trait TemperatureInterface {
-    fn get_temperature(&mut self) -> f64;
+pub trait JointStateInterface {
+    type Error;
+    fn get_position(&mut self) -> Result<f64, Self::Error>;
 }
 
-pub trait JointStateInterface {
-    fn get_position(&self) -> f64;
+pub trait TemperatureInterface {
+    type Error;
+    fn get_temperature(&mut self) -> Result<f64, Self::Error>;
+}
+
+pub trait TorqueInterface {
+    type Error;
+    fn get_torque(&mut self) -> Result<f64, Self::Error>;
 }

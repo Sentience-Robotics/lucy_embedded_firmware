@@ -1,4 +1,5 @@
 use std::io::{Read, Write};
+use std::io;
 use std::fs::File;
 use std::fmt;
 use std::time::Duration;
@@ -6,7 +7,8 @@ use core::cell::Cell;
 use serialport::{SerialPortType, UsbPortInfo};
 
 use lucy_embedded_firmware_core::data::{ActuatorSharedState};
-use lucy_embedded_firmware_core::actuators::{JointTrajectoryPoint, JointTrajectoryInterface, TorqueStatus, TorqueEnableInterface};
+use lucy_embedded_firmware_core::actuators::{JointTrajectoryPoint, JointTrajectoryInterface, TorqueStatus, TorqueEnableInterface, JointStateInterface, TemperatureInterface, TorqueInterface};
+use lucy_embedded_firmware_core::link::{Link, AnyLink, Controller};
 use lucy_embedded_firmware_core::serial::SerialChannel;
 use lucy_embedded_firmware_core::drivers::bus_servo::{BusServoDriver, BusServoConfig};
 
@@ -18,20 +20,78 @@ use std::ffi::CString;
 use std::os::fd::FromRawFd;
 
 pub struct UsbPort {
-    port: Box<dyn serialport::SerialPort>,
+    target_pid: u16,
+    target_vid: u16,
+    baud_rate: u32,
+    port: Option<Box<dyn serialport::SerialPort>>,
+}
+
+impl UsbPort {
+    pub const fn new(target_pid: u16, target_vid: u16, baud_rate: u32) -> Self {
+        Self {
+            target_pid,
+            target_vid,
+            baud_rate,
+            port: None,
+        }
+    }
 }
 
 impl SerialChannel for UsbPort {
     type Error = std::io::Error;
 
+    fn open(&mut self) -> Result<(), Self::Error> {
+        let ports = serialport::available_ports().unwrap();
+
+        let matching_port = ports.into_iter().find(|p| {
+            if let SerialPortType::UsbPort(UsbPortInfo { vid, pid, .. }) = p.port_type {
+                vid == self.target_vid && pid == self.target_pid
+            } else {
+                false
+            }
+        });
+
+        match matching_port {
+            Some(port_info) => {
+                let port = serialport::new(&port_info.port_name, self.baud_rate)
+                    .timeout(Duration::from_millis(50))
+                    .open()?;
+                self.port = Some(port);
+                Ok(())
+            }
+            None => {
+                Err(io::Error::new(io::ErrorKind::NotFound, "No matching USB"))
+            }
+        }
+    }
+
+    fn close(&mut self) -> Result<(), Self::Error> {
+        self.port = None;
+        Ok(())
+    }
+
     fn write(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
-        self.port.write_all(bytes)?;
+        if let Some(port) = &mut self.port {
+            port.write_all(bytes)?;
+        }
         Ok(())
     }
 
     fn read(&mut self, buffer: &mut [u8]) -> Result<usize, Self::Error> {
-        let n = self.port.read(buffer)?;
-        Ok(n)
+        if let Some(port) = &mut self.port {
+            let n = port.read_exact(buffer)?;
+            Ok(buffer.len())
+        } else {
+            println!("Error");
+            Ok(0)
+        }
+    }
+
+    fn clear(&mut self) -> Result<(), Self::Error> {
+        if let Some(port) = &mut self.port {
+            port.clear(serialport::ClearBuffer::All)?;
+        }
+        Ok(())
     }
 }
 
@@ -74,92 +134,84 @@ fn main() {
     );
 
     let table_map = unsafe { MmapMut::map_mut(&shm_file).unwrap() };
-    let ass: &ActuatorSharedState = unsafe {
-        &*(table_map.as_ptr() as *const ActuatorSharedState)
+    let ass: &mut ActuatorSharedState = unsafe {
+        &mut *(table_map.as_ptr() as *mut ActuatorSharedState)
     };
 
     let target_vid = 0x1a86;
     let target_pid = 0x55d3;
 
-    let ports = serialport::available_ports().unwrap();
-    let matching_port = ports.into_iter().find(|p| {
-        if let SerialPortType::UsbPort(UsbPortInfo { vid, pid, .. }) = p.port_type {
-            vid == target_vid && pid == target_pid
-        } else {
-            false
-        }
-    });
-
-    let port_info = matching_port.ok_or("Périphérique RP2040 introuvable. Est-il branché ?").unwrap();
-    println!("Périphérique trouvé sur : {}", port_info.port_name);
-
- 
-    let mut port = serialport::new(&port_info.port_name, 115_200)
-        .timeout(Duration::from_millis(50))
-        .open().unwrap();
-
-    let config = BusServoConfig {
-        id: 1,
-        min_pulse: 0,
-        max_pulse: 4096,
-        min_angle: 0.0,
-        max_angle: 360.0,
-        default_angle: 5.0,
-    };
+    let robot = [
+        BusServoConfig { id: 1, ..Default::default() },
+        BusServoConfig { id: 2, ..Default::default() },
+        BusServoConfig { id: 3, ..Default::default() },
+        BusServoConfig { id: 4, ..Default::default() },
+        BusServoConfig { id: 5, ..Default::default() },
+        BusServoConfig { id: 6, ..Default::default() },
+    ];
 
     let last_command_seq = ass.commands.command_seq.load(core::sync::atomic::Ordering::SeqCst);
     let last_state_seq = ass.states.state_seq.load(core::sync::atomic::Ordering::SeqCst);
     let mut channel = UsbPort {
-        port,
+        target_pid,
+        target_vid,
+        baud_rate: 1_000_000,
+        port: None,
     };
+    let link = AnyLink::Disconnected(Link::new(channel));
+    let mut controller = Controller { link: Some(link) };
+
+    let period = Duration::from_millis(20);
+    let mut next_tick = std::time::Instant::now();
 
     loop {
+        next_tick += period;
+
+        controller.tick();
+
         let command_seq = ass.commands.command_seq.load(core::sync::atomic::Ordering::SeqCst);
         let state_seq = ass.states.state_seq.load(core::sync::atomic::Ordering::SeqCst);
-        if command_seq != last_command_seq {
 
+        let link = controller.link.as_mut().unwrap().as_connected_mut().unwrap();
+
+
+        if command_seq != last_command_seq {
+            for (index, config) in robot.iter().enumerate() {
+                let mut driver = BusServoDriver {
+                    config: &config,
+                    link: link
+                };
+                let joint_trajectory_point = JointTrajectoryPoint {
+                    position: ass.commands.hw_commands[index],
+                    velocity: 0f64,
+                    acceleration: ass.commands.hw_accelerations[index],
+                };
+                let torque_status = TorqueStatus::from(ass.commands.hw_torque_enabled[index]);
+                if (torque_status == TorqueStatus::Enabled) {
+                    driver.set_joint_trajectory(joint_trajectory_point);
+                }
+                driver.set_torque_enable(torque_status);
+            }
+        }
+
+        for (index, config) in robot.iter().enumerate() {
             let mut driver = BusServoDriver {
                 config: &config,
-                channel: &mut channel,
+                link: link
             };
-
-            let joint_trajectory_point = JointTrajectoryPoint {
-                position: ass.commands.hw_commands[0],
-                velocity: ass.commands.hw_velocities[0],
-                acceleration: ass.commands.hw_accelerations[0],
-            };
-            driver.set_joint_trajectory(joint_trajectory_point);
-
-            let torque_status: TorqueStatus = TorqueStatus::from(ass.commands.hw_torque_enabled[0]);
-            driver.set_torque_enable(torque_status);
-        }
-
-        /*
-        let mut changes: Vec<(u16, u16)> = Vec::new();
-        sem.wait();
-        for (iterator, status) in rh.iter() {
-            if status {
-                changes.push((iterator, rt.registers[iterator as usize].get()));
+            if let Ok(position) = driver.get_position() {
+                ass.states.state_seq.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
+                ass.states.hw_positions[index] = position;
+                ass.states.state_seq.fetch_add(1, core::sync::atomic::Ordering::SeqCst);
             }
         }
-        for (register, _) in &changes {
-            rh.set_clean(*register);
+        
+        let now = std::time::Instant::now();
+        if now < next_tick {
+            std::thread::sleep(next_tick - now);
+        } else {
+            eprintln!("Warning: tick took longer than expected {:?}", now - next_tick);
+            next_tick = now;
         }
-        sem.post();
-
-        for (register, value) in changes {
-            println!("Register done on {} - {}", register, value);
-            let packet = write_register(0x01, register, value);
-            let _ = port.write_all(&packet);
-            std::thread::sleep(Duration::from_millis(10));
-        }
-        {
-            let mut buf = [0u8; 0xff];
-            if let Ok(n) = port.read(&mut buf) {
-                if n > 0 {
-                    print!("  <- firmware: {}", String::from_utf8_lossy(&buf[..n]));
-                }
-            }
-        }*/
     }
 }

@@ -1,82 +1,58 @@
 use crate::{pwm::PwmChannel};
 use crate::{modbus::RegisterView, modbus::ModbusAdapter, utils::map_range};
+use crate::actuators::{*};
 use core::f32::consts::PI;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum PwmServoError {
+    CommunicationError
+}
+
 pub struct PwmServoConfig {
+    pub amplitude: f64,
+    pub min_angle: f64,
+    pub max_angle: f64,
+    pub default_angle: f64,
     pub min_pulse: u16,
     pub max_pulse: u16,
-    pub min_angle: u16,
-    pub max_angle: u16,
-    pub default_angle: u16
 }
 
-type PwmServo90Driver<C> = PwmServoDriver<90, C>;
-type PwmServo180Driver<C> = PwmServoDriver<180, C>;
-type PwmServo270Driver<C> = PwmServoDriver<270, C>;
-type PwmServo360Driver<C> = PwmServoDriver<360, C>;
-
-pub struct PwmServoDriver<const A: u16, C> {
-    pub config: PwmServoConfig,
-    pub channel: C,
+pub struct PwmServoDriver<'cfg, 'bus, C: PwmChannel> {
+    pub config: &'cfg PwmServoConfig,
+    pub channel: &'bus mut C,
 }
 
-impl<const A: u16, C: PwmChannel> PwmServoDriver<A, C> {
-    pub const AMPLITUDE: u16 = A;
+impl<'cfg, 'bus, C: PwmChannel> JointTrajectoryInterface for PwmServoDriver<'cfg, 'bus, C> {
+    type Error = PwmServoError;
 
-    pub fn move_angle(&mut self, angle_rad: u16) {
-        let angle_deg = (angle_rad as f32 / 1000.0).to_degrees();
-        let clamped_deg = angle_deg.clamp(self.config.min_angle as f32, self.config.max_angle as f32);
+    fn set_joint_trajectory(&mut self, jtp: JointTrajectoryPoint) -> Result<(), Self::Error> {
+        let position = jtp.position.clamp(self.config.min_angle, self.config.max_angle);
+
         let pulse = (map_range(
-            clamped_deg,
-            0f32,
-            Self::AMPLITUDE as f32,
-            self.config.min_pulse as f32,
-            self.config.max_pulse as f32,
+            position,
+            0f64,
+            self.config.amplitude,
+            self.config.min_pulse as f64,
+            self.config.max_pulse as f64,
         ) + 0.5) as u16;
 
-        self.channel.set_pwm(pulse);
-    }
-
-    pub fn reset_angle(&mut self) {
-        self.move_angle(self.config.default_angle);
+        self.channel
+            .set_pwm(pulse)
+            .map_err(|_| PwmServoError::CommunicationError)?;
+        Ok(())
     }
 }
 
+impl<'cfg, 'bus, C: PwmChannel> TorqueEnableInterface for PwmServoDriver<'cfg, 'bus, C> {
+    type Error = PwmServoError;
 
-
-pub struct PwmServoModbusAdapter<const A: u16, C> {
-    pub base_register: u16,
-    pub cmd_reg_off: u16,
-    pub angle_reg_off: u16,
-    pub driver: PwmServoDriver<A, C>,
-}
-
-impl<const A: u16, C: PwmChannel> ModbusAdapter for PwmServoModbusAdapter<A, C> {
-    fn tick(&mut self, rv: &RegisterView) {
-        let cmd = rv.read_register(self.cmd_reg_off);
-        rv.write_register(self.cmd_reg_off, 0);
-        match cmd {
-            1 => {
-                let angle = rv.read_register(self.angle_reg_off);
-                self.driver.move_angle(angle);
-            },
-            2 => {
-                self.driver.reset_angle();
-            },
-            _ => {
-
-            }
+    fn set_torque_enable(&mut self, status: TorqueStatus) -> Result<(), Self::Error> {
+        if status == TorqueStatus::Disabled {
+            self.channel
+                .set_pwm(0)
+                .map_err(|_| PwmServoError::CommunicationError)?;
         }
-    }
 
-    fn get_nb_register(&self) -> u16 {
-        2
-    }
-
-    fn get_base_register(&self) -> u16 {
-        self.base_register
+        Ok(())
     }
 }
+
